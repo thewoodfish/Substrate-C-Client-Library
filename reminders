@@ -1,0 +1,5 @@
+Commenced may 26/22
+
+to compile
+ gcc file.c o -file
+ AF_INET = IPv4
