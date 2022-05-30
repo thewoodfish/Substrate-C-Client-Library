@@ -1,8 +1,8 @@
 /* 
  * Author: Woodfish,
  * File: substrate_interface.h
- * Desc: A specialized file in interfacing with a Substrate node.
- * Further: A C implementation of the Python Interface provided by the Polkascan Group
+ * Desc: A specialized library to interface with a Substrate node.
+ * Further: Based on the Python substrate library by the Polkascan Group
  * Date: May 27 20:47
  * Licence: MIT
 */
@@ -13,7 +13,7 @@
 #include <string.h>
 #include <math.h>
 #include "utility.h"
-#include "wsServer/ws.h"
+#include "network.h"
 
 /* Parameters */
 
@@ -30,25 +30,6 @@
     use_remote_preset: When True preset is downloaded from Github master, otherwise use files from local installed scalecodec package
     ws_options: struct of options to pass to the websocket-client create_connection function
 */
-
-// Websocket connection options
-struct Ws_option {
-    long max_size;
-    long read_limit;
-    long write_limit;
-
-};
-
-struct Dh {
-    char content_type[17];
-    char cache_control[10];
-};
-
-struct Config {
-    bool use_remote_preset = true;
-    bool auto_discover = true;
-    bool auto_reconnect = true;
-};
 
 static struct Init_vars {
     char url[25];
@@ -84,17 +65,25 @@ static struct Init_vars {
     int metadata_cache;
     int type_registry_cache;
     
-    bool debug = false;
+    bool debug = false; 
 
     Config config;
     int session;
 
 } Self ;
 
-// extern variables
-extern char buffer[10];
 
+// extern variables
+extern char buffer[1024];
+
+Init_vars* init(
+    char* url, int websocket, int ss58_format, void* type_registry, char* type_registry_preset, void* cache_region, void* runtime_config,
+    bool use_remote_preset, Ws_option ws_options, bool auto_discover, bool auto_reconnect
+);
 void connect_websocket();
+void rpc_request(char* method, char** params, void* result_handler);
+
+
 
 // initialize Self struct
 Init_vars* init(
@@ -125,8 +114,12 @@ Init_vars* init(
     !Self.ws_options.read_limit ? Self.ws_options.read_limit = (long) pow(2, 32) : NULL;
     !Self.ws_options.write_limit ? Self.ws_options.write_limit = (long) pow(2, 32) : NULL;
 
-    if (Self.url && (!strcmp(slice(Self.url, buffer, 0, 6), "wss://") || !strcmp(slice(Self.url, buffer, 0, 5), "ws://"))) 
+    if (Self.url && (!strcmp(slice(Self.url, buffer, 0, 6), "wss://") || !strcmp(slice(Self.url, buffer, 0, 5), "ws://"))) {
+        // get IP address from url slice
+        zero_buffer();
+
         connect_websocket();
+    }
     else if (websocket) 
         Self.websocket = websocket;
 
@@ -142,18 +135,93 @@ Init_vars* init(
     reload_type_registry(use_remote_preset, auto_discover);
 
     return &Self;
-}
+} 
 
-void connect_websocket() {
+/**
+* @brief Connect to a websocket
+*/
+
+static void connect_websocket()
+{
     if (Self.url && (!strcmp(slice(Self.url, buffer, 0, 6), "wss://") || !strcmp(slice(Self.url, buffer, 0, 5), "ws://"))) {
         printf("Connecting to %s ...", Self.url);
 
-        // create connection
-        connect_websocket(Self.websocket, 1, 1000);
+        // zero out buffer
+        zero_buffer();
 
+        // buffer contain the address now.
+        strstr(Self.url, "wss") ? slice(Self.url, buffer, 6, strlen(Self.url) - 6) : slice(Self.url, buffer, 6, strlen(Self.url) - 5);
+
+        // convert the address into Numerics and copy into buffer
+        
+        // create connection
+        Self.websocket = connect_websock(8000, 1, 1000, ip_to_url(buffer));
+        zero_buffer();
     }
 }
 
+/**
+* @brief Close the websocket
+*
+* @return Returns 0 on success, -1 otherwise.
+*/
+int close_websocket() 
+{
+    return close_ws();
+}
 
+/**
+* @brief Method that handles the actual RPC request to the Substrate node. The other implemented functions eventually
+*        use this method to perform the request.
+
+* @param result_handler: Callback function that processes the result received from the node
+* @param method: method of the JSONRPC request
+* @param params: a list containing the parameters of the JSONRPC request
+
+* @returns a dict with the parsed result of the request.
+*/
+
+void rpc_request(char* method, char** params, void* result_handler)
+{
+    Payload pl;
+    int request_id, update_nr, subscription_id;
+    char json_string[1024];
+    char json_body[4048];
+
+    request_id = Self.request_id;
+    Self.request_id++;
+
+    pl.jsonrpc = 2.0;
+    strcpy(pl.method, method);
+    pl.params = params;
+    pl.id = request_id;
+
+    printf("RPC request #%s: \"%s\"", request_id, method);
+
+    if (Self.websocket) {
+        // convert to JSON string then send
+        strcpy(json_string, json_dump_payload(&pl));
+        zero_buffer();
+
+        // send
+        if (websocket_send(json_string) == -1) {
+            // try to reconnect and send
+            if (Self.config.auto_reconnect && strlen(Self.url) > 0) {
+                printf("%s", "Will reconnect and try again...");
+                connect_websocket();
+
+                rpc_request(method, params, result_handler);
+            } else {
+                // Fatal Error
+                printf("%s", "Error: Could not reach server");
+                exit(1);
+            }
+        }
+
+
+
+    }
+
+}
 
 

@@ -13,6 +13,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ * 
+ * Edited by: @thewoodfish
+ * Change: Let server accept connection from a specific address(the chain explorer)
  */
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
@@ -1617,12 +1620,13 @@ static void *ws_accept(void *data)
  *
  * @param timeout_ms  Max timeout if the client is not responding
  *                    (in milliseconds).
+ * @param address	The address of the chain explorer
  *
  * @return If @p thread_loop != 0, returns 0. Otherwise, never
  * returns.
  */
 int ws_socket(struct ws_events *evs, uint16_t port, int thread_loop,
-	uint32_t timeout_ms)
+	uint32_t timeout_ms, char* address)
 {
 	struct sockaddr_in server; /* Server.                */
 	pthread_t accept_thread;   /* Accept thread.         */
@@ -1703,7 +1707,7 @@ int ws_socket(struct ws_events *evs, uint16_t port, int thread_loop,
 		pthread_detach(accept_thread);
 	}
 
-	return (0);
+	return (*sock);
 }
 
 #ifdef AFL_FUZZ

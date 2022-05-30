@@ -265,7 +265,7 @@ extern "C" {
 	extern int ws_get_state(ws_cli_conn_t *cli);
 	extern int ws_close_client(ws_cli_conn_t *cli);
 	extern int ws_socket(struct ws_events *evs, uint16_t port, int thread_loop,
-		uint32_t timeout_ms);
+		uint32_t timeout_ms, char* address);
 
 	/* Ping routines. */
 	extern void ws_ping(ws_cli_conn_t *cli, int threshold);
