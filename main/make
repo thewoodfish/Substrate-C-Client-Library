@@ -1,0 +1,93 @@
+SHELL  := /bin/sh
+
+NAME   := proj
+
+
+#
+# macro of all *.c files 
+# (NOTE:
+# (the following 'wildcard' will pick up ALL .c files
+# (like FileHeader.c and FunctionHeader.c 
+# (which should not be part of the build
+# (so be sure no unwanted .c files in directory
+# (or change the extension
+#
+SRC := $(wildcard *.c)
+OBJ := $(SRC:.c=.o)
+DEP := $(SRC:.c=.d)
+INC := $(SRC:.c=.h)  # or perhaps INC := convertAll.h
+
+MAKE    :=  /usr/bin/make
+
+CC      :=  /usr/bin/gcc
+
+CP      :=  cp
+
+LDFLAGS := 
+
+DEBUG   :=  -ggdb3
+
+CFLAGS :=  $(DEBUG) -Wall -Wextra -pedantic -Wconversion -std=gnu11
+
+LIBS    :=   
+
+.PHONY: all
+all : $(NAME)
+
+
+#
+# link the .o files into the executable 
+# using the linker flags
+# -- explicit rule
+#
+$(name): $(OBJ)
+    #
+    # ======= $(name) Link Start =========
+    $(CC) $(LDFLAGS) -o $@ $(OBJ) $(COMMON_OBJ) $(LIBS)
+    # ======= $(name) Link Done ==========
+    #
+
+
+#
+#create dependancy files -- inference rule
+#
+%.d: %.c 
+    # 
+    # ========= START $< TO $@ =========
+    $(CC) -M $(CPPFLAGS) $< > $@.$$$$;                      \
+    sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@;     \
+    rm -f $@.$$$$
+    # ========= END $< TO $@ =========
+
+
+# 
+# compile the .c files into .o files using the compiler flags
+# -- inference rule
+#
+%.o: %.c %.d 
+    # 
+    # ========= START $< TO $@ =========
+    $(CC) $(CFLAGS) -c $< -o $@ -I. 
+    # ========= END $< TO $@ =========
+    # 
+
+
+.PHONY: clean
+clean: 
+    # ========== CLEANING UP ==========
+    rm -f *.o
+    rm -f $(name).map
+    rm -f $(name)
+    rm -f *.d
+    # ========== DONE ==========
+
+
+# include the contents of all the .d files
+# note: the .d files contain:
+# <filename>.o:<filename>.c plus all the dependancies for that .c file 
+# I.E. the #include'd header files
+# wrap with ifneg... so will not rebuild *.d files when goal is 'clean'
+#
+ifneq "$(MAKECMDGOALS)" "clean"
+-include $(DEP)
+endif

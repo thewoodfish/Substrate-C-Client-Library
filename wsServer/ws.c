@@ -50,8 +50,8 @@ typedef int socklen_t;
 
 #include <unistd.h>
 
-#include <utf8.h>
-#include <ws.h>
+#include "utf8.h"
+#include "ws.h"
 
 /**
  * @dir src/
@@ -1154,7 +1154,7 @@ static int read_frame(struct ws_frame_data *wfd,
  * @attention This is part of the internal API and is documented just
  * for completeness.
  */
-static int next_frame(struct ws_frame_data *wfd)
+static int next_frame(struct ws_frame_data* wfd) 
 {
 	unsigned char *msg_data; /* Data frame.                */
 	unsigned char *msg_ctrl; /* Control frame.             */
@@ -1683,7 +1683,7 @@ int ws_socket(struct ws_events *evs, uint16_t port, int thread_loop,
 
 	/* Prepare the sockaddr_in structure. */
 	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_addr.s_addr = inet_addr(address);
 	server.sin_port = htons(port);
 
 	/* Bind. */
