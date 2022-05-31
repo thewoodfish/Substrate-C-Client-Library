@@ -1,5 +1,10 @@
-Commenced may 26/22
+// Commenced may 26/22
 
-to compile
- gcc file.c o -file
- AF_INET = IPv4
+// to compile
+//  gcc file.c o -file
+//  AF_INET = IPv4
+
+// gcc main.c substrate_interface.c utility.c network.c ../wsServer/ws.c ../wsServer/handshake.c ../wsServer/sha1.c ../wsServer/base64.c ../wsServer/utf8.c -lpthread
+
+
+// pslm 24 2
