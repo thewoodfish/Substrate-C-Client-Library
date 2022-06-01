@@ -17,6 +17,9 @@
 char space[4096];
 char* buffer = space;
 
+// message flag { 1 to indicate a message has dropped into buffer }
+int flag = 0;
+
 
 // returns slice of string
 char* slice(const char* str, char* result, size_t start, size_t end) {
@@ -99,4 +102,100 @@ char* json_dump_payload(struct Payload* p)
  */
 char* alloc_mem(const char* str) {
     return (char *) malloc(strlen(str) + 1);
+}
+
+
+/**
+ * @brief Parse JSON string into a Request Message Queue struct
+ *
+ * @param len The address of the JSON string
+ * 
+ * @returns Pointer to the RMQ
+ */
+void parse_json_string(struct Req_queue* rmq, char* buf)
+{
+    char* str = buf;
+    char* s1 = rmq->jsonrpc;
+
+    char space[1024];
+    char* s2 = space;
+
+    char box[10];
+    char* s3 = box;
+
+    // some sort of stack base pointer
+    char* usp;
+
+    int i, count;
+
+    // extract result, id and version
+    i = count = 0;
+
+    while (*str) {
+        if (*str == ':') {
+            // parse "jsonrpc"
+            if (!i) {
+                str += 2; // skip ':"'
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
+                }
+
+            } else if (i == 1) {
+                // parse "result"
+
+                // keep base pointer
+                usp = str;
+
+                str += 2; // skip ':"'
+                while (*str != '"') {
+                    count++;
+                    str++;
+                }
+
+                // return back to usp
+                str = usp;
+
+                str += 2;
+                while (*str != '"') {
+                    *s2 = *str;
+                    str++; s2++;
+                }
+
+            } else {
+                str += 2; // skip ':"'
+                while (*str != '"') {
+                    *s3 = *str;
+                    str++; s3++;
+                }
+            }
+
+            i++;
+        }
+        str++;
+    }
+
+    // allocate space for result
+    rmq->result = (char*) malloc(count + 1);
+    strcpy(rmq->result, space);
+
+    rmq->id = atoi(box);
+    rmq->next = NULL;
+}
+
+
+/**
+ * @brief Clear message flag
+ */
+void reset_flag() {
+    flag = 0;
+}
+
+
+/**
+ * @brief Append message to RPC linked list
+ * 
+ */
+void append_rpc_message(struct Rmq_queue* req) {
+
 }

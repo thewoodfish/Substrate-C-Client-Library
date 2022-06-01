@@ -118,7 +118,11 @@ void rpc_request(char* method, char** params, void* result_handler)
     int request_id, update_nr, subscription_id;
     char* json_string;
     char* json_body = NULL;
+    struct Req_queue* req; 
 
+    // first allocate RMQ struct
+    req = (struct Req_queue*) malloc(sizeof(__RMQ));
+    
     request_id = Self.request_id;
     Self.request_id++;
 
@@ -155,13 +159,26 @@ void rpc_request(char* method, char** params, void* result_handler)
         
         int i = 0;
         while (!json_body) {
-            // recieve from server int buffer
+            // receive message from server into buffer
             websocket_recv(buffer);
 
+            // busy wait on queue
+            while (!flag) ;
+            reset_flag();
+
+            // extract fields & data from JSON string
+            parse_json_string(req, buffer);
+
+            fprintf(stderr, "%s is the package with version %d", req->result, req->id);
+
+            // chain to linked list
+            append_rpc_message(req);
+            zero_buffer();
+
+            // check for error in result
         }
     }
 }
-
 
 
 

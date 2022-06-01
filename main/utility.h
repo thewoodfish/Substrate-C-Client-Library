@@ -3,6 +3,7 @@
 
 // extern variables
 extern char* buffer;
+extern int flag;
 extern struct Dh _d_andler;
 extern struct Config _c_def;
 
@@ -15,10 +16,12 @@ struct Ws_option {
 };
 
 // RPC message queue (a linked list)
-struct Rmq {
-    char* data;
-    struct Rmq* next;
-}; 
+struct Req_queue {
+    char jsonrpc[5];
+    char* result;
+    int id;
+    struct Req_queue* next;
+} __RMQ; 
 
 struct Dh {
     char content_type[17];
@@ -44,7 +47,10 @@ extern char* ip_to_url(char* url);
 extern char* clear_n_copy(char* dest, char* source);
 extern char* json_dump_payload(struct Payload* p);
 extern char* alloc_mem(const char* str);
-void zero_buffer();
+extern void zero_buffer();
+extern void parse_json_string(struct Req_queue* rmq, char* buf);
+extern void reset_flag();
+extern void append_rpc_message(struct Req_queue* rmq);
 
 
 
