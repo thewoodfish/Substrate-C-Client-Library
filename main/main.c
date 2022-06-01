@@ -17,5 +17,5 @@
 int main(void) {
     // initialize connection to node
     struct Substrate* substrate;
-    substrate = init_client("ws://127.0.0.1", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
+    substrate = init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
 }

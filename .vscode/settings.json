@@ -4,6 +4,7 @@
         "math.h": "c",
         "errno.h": "c",
         "utility.h": "c",
-        "network.h": "c"
+        "network.h": "c",
+        "wsclient.h": "c"
     }
 }

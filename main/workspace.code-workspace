@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "s-beta",
+			"path": "../websocket/s-beta"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"pthread.h": "c",
+			"math.h": "c",
+			"errno.h": "c",
+			"utility.h": "c",
+			"network.h": "c"
+		}
+	}
+}

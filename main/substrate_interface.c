@@ -85,15 +85,9 @@ static void connect_websocket()
 
         // zero out buffer
         zero_buffer();
-
-        // buffer contain the address now.
-        strstr(Self.url, "wss") ? slice(Self.url, buffer, 6, strlen(Self.url) - 6) : slice(Self.url, buffer, 6, strlen(Self.url) - 5);
-
-        // convert the address into Numerics and copy into buffer
         
-        // create connection
-        Self.websocket = strstr(Self.url, "127.0") ? connect_websock(8000, 0, 1000, buffer) : connect_websock(8000, 0, 1000, ip_to_url(buffer));
-        zero_buffer();
+        // create connection and return socket descriptor
+        Self.websocket = connect_websock(Self.url);
     }
 }
 

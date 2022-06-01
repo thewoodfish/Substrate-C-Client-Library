@@ -10,106 +10,52 @@
 #include <netdb.h>
 #include <errno.h>
 #include <arpa/inet.h>
-#include "../wsServer/ws.h"
+#include "../websocket/wsclient.h"
 #include "network.h"
 
 
-// socket client struct
-ws_cli_conn_t* sock_client;
-
-
-/**
- * @brief Called when a client connects to the server.
- *
- * @param client Client connection. The @p client parameter is used
- * in order to send messages and retrieve informations about the
- * client.
- */
-
-void onopen(ws_cli_conn_t *client)
-{
-	char *cli;
-	cli = ws_getaddress(client);
-
-    // set global variable for subsequent use
-    sock_client = client;
-
-    #ifndef DISABLE_VERBOSE
-        printf("Connection opened, addr: %s\n", cli);
-    #endif
+int onclose(wsclient *c) {
+	fprintf(stderr, "Connection closed: %d\n", c->sockfd);
+	return 0;
 }
 
-/**
- * @brief Called when a client disconnects to the server.
- *
- * @param client Client connection. The @p client parameter is used
- * in order to send messages and retrieve informations about the
- * client.
- */
-void onclose(ws_cli_conn_t *client)
-{
-	char *cli;
-	cli = ws_getaddress(client);
-
-    #ifndef DISABLE_VERBOSE
-        printf("Connection closed, addr: %s\n", cli);
-    #endif
+int onerror(wsclient *c, wsclient_error *err) {
+	fprintf(stderr, "Error: (%d): %s\n", err->code, err->str);
+	if(err->extra_code) {
+		errno = err->extra_code;
+		perror("recv");
+	}
+	return 0;
 }
 
-/**
- * @brief Creates a web socket connection object
- *
- * @return the connection descriptor
- * 
- */
-int connect_websock(uint16_t port, int thread_loop,
-	uint32_t timeout_ms, char* address) 
-{
-    struct ws_events ev;
-
-    ev.onopen  = &onopen;
-    ev.onclose  = &onclose;
-
-    return ws_socket(&ev, port, thread_loop, timeout_ms, address); 
+int onmessage(wsclient *c, wsclient_message *msg) {
+	fprintf(stderr, "onmessage: (%llu): %s\n", msg->payload_len, msg->payload);
+	return 0;
 }
 
-
-/**
- * @brief Sends a string to server
- *
- * @return the number of bytes written (-1 if error)
- * 
- */
-int websocket_send(char* str) {
-    return ws_sendframe_txt(sock_client, str);
+int onopen(wsclient *c) {
+	fprintf(stderr, "Connection opened: %d\n", c->sockfd);
+	return 0;
 }
 
-/**
-* @brief Close the websocket
-*
-* @return Returns 0 on success, -1 otherwise.
-*/
-int close_ws() {
-    return ws_close_client(sock_client); 
+int connect_websock(const char* str) {
+    wsclient* client = libwsclient_new(str);
+
+    if (!client) {
+		fprintf(stderr, "Unable to initialize new WS client.\n");
+		exit(1);
+	}
+
+    //set callback functions for this client
+	libwsclient_onopen(client, &onopen);
+	libwsclient_onmessage(client, &onmessage);
+	libwsclient_onerror(client, &onerror);
+	libwsclient_onclose(client, &onclose);
+
+    libwsclient_helper_socket(client, "test.sock");
+
+	// starts run thread.
+	libwsclient_run(client);
+	
+    return client->sockfd;
 }
-
-
-// /**
-//  * @brief Retrieve data from the server and append it to linked list
-//  *
-//  * @param buf The array to append to
-//  */
-// void json_load_append(struct Rmq* buf) {
-//     char* p;
-
-//     // load from server
-//     next_frame(frame_data, p);
-
-//     // allocate it to the buffer
-//     buf = (struct Rmq*) malloc(sizeof(struct Rmq));
-
-//     buf->data = (char*) malloc(strlen(p) + 1);
-//     strcpy(buf->data, p);
-
-//     buf->next = NULL;
-// }
