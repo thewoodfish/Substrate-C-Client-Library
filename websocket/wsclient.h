@@ -143,7 +143,7 @@ void libwsclient_onopen(wsclient *client, int (*cb)(wsclient *c));
 void libwsclient_onmessage(wsclient *client, int (*cb)(wsclient *c, wsclient_message *msg));
 void libwsclient_onerror(wsclient *client, int (*cb)(wsclient *c, wsclient_error *err));
 void libwsclient_close(wsclient *client);
-int libwsclient_send(wsclient *client, char *strdata);
+int libwsclient_send(wsclient *client, const char *strdata);
 int libwsclient_send_fragment(wsclient *client, char *strdata, int len, int flags);
 
 

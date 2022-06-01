@@ -72,6 +72,8 @@ void *libwsclient_run_thread(void *ptr) {
 		for(i = 0; i < n; i++)
 			libwsclient_in_data(c, buf[i]);
 
+		// read once for now
+		n = 0;
 	} while(n > 0);
 
 	if(n < 0) {
@@ -85,10 +87,13 @@ void *libwsclient_run_thread(void *ptr) {
 
 	}
 
-	if(c->onclose) {
-		c->onclose(c);
-	}
-	close(c->sockfd);
+	/* Don't close connection Yet */
+
+	// if(c->onclose) {
+	// 	c->onclose(c);
+	// }
+	// close(c->sockfd);
+
 	free(c);
 	return NULL;
 }
@@ -967,7 +972,7 @@ int libwsclient_send_fragment(wsclient *client, char *strdata, int len, int flag
 	return sent;
 }
 
-int libwsclient_send(wsclient *client, char *strdata)  {
+int libwsclient_send(wsclient *client, const char *strdata)  {
 	wsclient_error *err = NULL;
 	struct timeval tv;
 	unsigned char mask[4];

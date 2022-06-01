@@ -13,4 +13,6 @@ extern int close_ws();
 
 int onmessage(wsclient *c, wsclient_message *msg);
 
+extern int websocket_send(const char* str);
 
+extern int websocket_recv(char* str);

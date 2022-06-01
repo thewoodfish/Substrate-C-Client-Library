@@ -13,8 +13,8 @@
 #include "utility.h"
 
 
-// global buffer
-char space[1024];
+// global buffer - 4KB
+char space[4096];
 char* buffer = space;
 
 
@@ -84,7 +84,7 @@ char* json_dump_payload(struct Payload* p)
         sp += count - 1;
     }
 
-    sprintf(buffer, "{\"jsonrpc\":\"%f\",\"method\":\"%s\",\"params\":\"%s\",\"id\":\"%i\"}", p->jsonrpc, p->method, slice(buf, dummy, 0, count), p->id);
+    sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"%s\",\"id\":\"%i\"}", p->jsonrpc, p->method, slice(buf, dummy, 0, count), p->id);
     
     return buffer;
 }

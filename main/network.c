@@ -12,6 +12,10 @@
 #include <arpa/inet.h>
 #include "../websocket/wsclient.h"
 #include "network.h"
+#include "utility.h"
+
+// global ws client
+wsclient cl_main;
 
 
 int onclose(wsclient *c) {
@@ -29,7 +33,10 @@ int onerror(wsclient *c, wsclient_error *err) {
 }
 
 int onmessage(wsclient *c, wsclient_message *msg) {
-	fprintf(stderr, "onmessage: (%llu): %s\n", msg->payload_len, msg->payload);
+	// fprintf(stderr, "onmessage: (%llu): %s\n", msg->payload_len, msg->payload);
+	clear_n_copy(buffer, msg->payload);
+	fprintf(stderr, "%s", buffer);
+	
 	return 0;
 }
 
@@ -56,6 +63,24 @@ int connect_websock(const char* str) {
 
 	// starts run thread.
 	libwsclient_run(client);
-	
+
+	cl_main = *client;
+
     return client->sockfd;
+}
+
+int close_ws() {
+	// close connection
+	libwsclient_finish(&cl_main);
+	libwsclient_close(&cl_main);
+}
+
+// send string to server
+int websocket_send(const char* str) {
+	return libwsclient_send(&cl_main, str);
+}
+
+// recive from server
+int websocket_recv(char* str) {
+	return _libwsclient_read(&cl_main, str, strlen(str));
 }

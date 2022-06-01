@@ -91,15 +91,15 @@ static void connect_websocket()
     }
 }
 
-/**8000
+/**
 * @brief Close the websocket
 *
 * @return Returns 0 on success, -1 otherwise.
 */
-// int close_websocket() 
-// {
-//     return close_ws();
-// }
+int close_websocket() 
+{
+    return close_ws();
+}
 
 /**
 * @brief Method that handles the actual RPC request to the Substrate node. The other implemented functions eventually
@@ -109,54 +109,58 @@ static void connect_websocket()
 * @param method: method of the JSONRPC request
 * @param params: a list containing the parameters of the JSONRPC request
 
-* @returns a dict with the parsed result of the request.
+* @returns a struct with the parsed result of the request.
 */
 
-// void rpc_request(char* method, char** params, void* result_handler)
-// {
-//     struct Payload pl;
-//     int request_id, update_nr, subscription_id;
-//     char json_string[1024];
-//     char json_body[4048];
+void rpc_request(char* method, char** params, void* result_handler)
+{
+    struct Payload pl;
+    int request_id, update_nr, subscription_id;
+    char* json_string;
+    char* json_body = NULL;
 
-//     request_id = Self.request_id;
-//     Self.request_id++;
+    request_id = Self.request_id;
+    Self.request_id++;
 
-//     pl.jsonrpc = 2.0;
-//     strcpy(pl.method, method);
-//     pl.params = params;
-//     pl.id = request_id;
+    strcpy(pl.jsonrpc, "2.0");
 
-//     printf("RPC request #%s: \"%s\"", request_id, method);
+    pl.method = alloc_mem(method);
+    strcpy(pl.method, method);
 
-//     if (Self.websocket) {
-//         // convert to JSON string then send
-//         strcpy(json_string, json_dump_payload(&pl));
-//         zero_buffer();
+    pl.params = params;
+    pl.id = request_id;
 
-//         // send
-//         if (websocket_send(json_string) == -1) {
-//             // try to reconnect and send
-//             if (Self.config.auto_reconnect && strlen(Self.url) > 0) {
-//                 printf("%s", "Will reconnect and try again...");
-//                 connect_websocket();
+    printf("RPC request #%d: \"%s\"", request_id, method);
 
-//                 rpc_request(method, params, result_handler);
-//             } else {
-//                 // Fatal Error
-//                 printf("%s", "Error: Could not reach server");
-//                 exit(1);
-//             }
-//         }
+    if (Self.websocket) {
+        // convert to JSON string
+        json_string = alloc_mem(json_dump_payload(&pl));
+        strcpy(json_string, json_dump_payload(&pl));
+        zero_buffer();
 
-//         while (!json_body) {
-//             // load into the 
-//             json_load_append(Self.rpc_message_queue);
+        // send
+        if (websocket_send(json_string) == -1) {
+            // try to reconnect and send
+            if (Self.config->auto_reconnect && strlen(Self.url) > 0) {
+                printf("%s", "Connection closed: Trying to reconnect...");
+                connect_websocket();
 
-//             printf("%s" , Self.rpc_message_queue->data);
-//         }
-//     }
-// }
+                rpc_request(method, params, result_handler);
+            } else {
+                // Fatal Error
+                printf("%s", "Error: Could not reach server");
+                exit(1);
+            }
+        }
+        
+        int i = 0;
+        while (!json_body) {
+            // recieve from server int buffer
+            websocket_recv(buffer);
+
+        }
+    }
+}
 
 
 

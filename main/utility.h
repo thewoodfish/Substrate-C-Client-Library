@@ -32,8 +32,8 @@ struct Config {
 } _c_def;
 
 struct Payload {
-    double jsonrpc;
-    char method[100];
+    char jsonrpc[10];
+    char* method;
     char** params;
     int id;
     
