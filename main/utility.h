@@ -20,6 +20,7 @@ struct Req_queue {
     char jsonrpc[5];
     char* result;
     int id;
+    bool err_flag;
     struct Req_queue* next;
 } __RMQ; 
 

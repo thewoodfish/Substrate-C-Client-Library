@@ -72,6 +72,8 @@ int connect_websock(const char* str) {
 }
 
 int close_ws() {
+	fprintf(stderr, "%s\n", "Connection closed.");
+
 	// close connection
 	libwsclient_finish(&cl_main);
 	libwsclient_close(&cl_main);

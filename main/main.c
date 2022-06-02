@@ -16,9 +16,10 @@
 
 int main(void) {
     // initialize connection to node
-    struct Substrate* substrate;
     char* param[] = {NULL};
 
-    substrate = init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
-    fprintf(stderr, "%s\n", rpc_request("system_version", param, NULL));
+    init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
+    fprintf(stderr, "The name of the chain is %s\n", sc_name());
+
+    close_websocket();
 }

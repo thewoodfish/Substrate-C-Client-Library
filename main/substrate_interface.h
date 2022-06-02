@@ -42,12 +42,16 @@ static struct Substrate {
 
 
 
-extern struct Substrate* init_client(
+extern void init_client(
     const char* url, int websocket, int ss58_format, void* type_registry, const char* type_registry_preset, void* cache_region, void* runtime_config,
     bool use_remote_preset, struct Ws_option* ws_options, bool auto_discover, bool auto_reconnect
 );
 static void connect_websocket();
-extern char* rpc_request(char* method, char** params, void* result_handler);
+extern void close_websocket();
+static char* rpc_request(char* method, char** params, void* result_handler);
+extern char* sc_name();
+static void free_all_rmq();
+
 
 
 

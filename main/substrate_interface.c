@@ -1,5 +1,5 @@
 /* 
- * Author: Woodfish,
+ * Author: Woodfish
  * File: substrate_interface.h
  * Desc: A specialized library to interface with a Substrate node.
  * Further: Based on the Python substrate library by the Polkascan Group
@@ -17,7 +17,7 @@
 #include "substrate_interface.h"
 
 // initialize Self struct
-struct Substrate* init_client(
+void init_client(
     const char* url, int websocket, int ss58_format, void* type_registry, const char* type_registry_preset, void* cache_region, void* runtime_config,
     bool use_remote_preset, struct Ws_option* ws_options, bool auto_discover, bool auto_reconnect
 ) {
@@ -71,7 +71,6 @@ struct Substrate* init_client(
 
     // reload_type_registry(use_remote_preset, auto_discover);
 
-    return &Self;
 } 
 
 /**
@@ -96,9 +95,12 @@ static void connect_websocket()
 *
 * @return Returns 0 on success, -1 otherwise.
 */
-int close_websocket() 
+void close_websocket() 
 {
-    return close_ws();
+    close_ws();
+
+    // clear all RPC messages
+    free_all_rmq();
 }
 
 /**
@@ -112,7 +114,7 @@ int close_websocket()
 * @returns a struct with the parsed result of the request.
 */
 
-char* rpc_request(char* method, char** params, void* result_handler)
+static char* rpc_request(char* method, char** params, void* result_handler)
 {
     struct Payload pl;
     int request_id, update_nr, subscription_id;
@@ -158,22 +160,30 @@ char* rpc_request(char* method, char** params, void* result_handler)
             }
         }
         
-        int i = 0;
         while (!json_body) {
             // receive message from server into buffer
-            websocket_recv(buffer);
+            if (websocket_recv(buffer) == -1)
+                fprintf(stderr, "%s", "Error, could not read from socket!\n");
 
             // busy wait on queue
-            while (!flag) ;
+            while (!flag)   ;
             reset_flag();
 
-            // extract fields & data from JSON string
+            // extract fields & data from JSON string. Check for errors
             parse_json_string(req, buffer);
             zero_buffer();
 
+            // check for errors
+            if (req->err_flag) {
+                fprintf(stderr, "Error %s\n", req->result);
+                // clear result
+                memset(req->result, 0x00, strlen(req->result));
+            }
+
+            // chain to linked list {to be freed later}
+            append_rpc_message(req);
+
             /******** WEBSOCKET SUBSCRIPTIONS ***********/
-            // // chain to linked list
-            // append_rpc_message(req);
 
             // // search for subscriptions
             // rmq = Self.rpc_message_queue;
@@ -202,5 +212,29 @@ char* rpc_request(char* method, char** params, void* result_handler)
     }
 }
 
+/**
+* @brief Free all RPC message queue
+*/
+static void free_all_rmq() {
+    while (Self.rpc_message_queue != NULL) {
+        remove_rpc_message(Self.rpc_message_queue);
+        Self.rpc_message_queue = Self.rpc_message_queue->next;
+    }
+}
+
+char* sc_name() {
+    char* buf;
+    char* param[] = {"n", NULL};
+
+    // check for errors
+    if (buf = rpc_request("system_name", param, NULL)) {
+        if (Self.name == NULL) {
+            Self.name = alloc_mem(buf);
+            strcpy(Self.name, buf);
+        }
+    }
+
+    Self.name;
+}
 
 

@@ -1,5 +1,6 @@
 // UTILITY FUNCTIONS
 #include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,8 +77,8 @@ char* ip_to_url(char* url) {
 char* json_dump_payload(struct Payload* p) 
 {
     int j, count = 0;
-    char dummy[1024];
-    char buf[1024];
+    char* dummy = (char*) malloc(1024);
+    char* buf = (char*) malloc(1024);
 
     char* sp = buf;
     char** io = p->params;
@@ -90,6 +91,9 @@ char* json_dump_payload(struct Payload* p)
 
     sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"%s\",\"id\":\"%i\"}", p->jsonrpc, p->method, slice(buf, dummy, 0, count), p->id);
     
+    free(dummy);
+    free(buf);
+
     return buffer;
 }
 
@@ -118,10 +122,10 @@ void parse_json_string(struct Req_queue* rmq, char* buf)
     char* str = buf;
     char* s1 = rmq->jsonrpc;
 
-    char space[1024];
+    char* space = (char*) malloc(1024);
     char* s2 = space;
 
-    char box[10];
+    char* box = (char*) malloc(10);
     char* s3 = box;
 
     // some sort of stack base pointer
@@ -132,56 +136,96 @@ void parse_json_string(struct Req_queue* rmq, char* buf)
     // extract result, id and version
     i = count = 0;
 
-    while (*str) {
-        if (*str == ':') {
-            // parse "jsonrpc"
-            if (!i) {
-                str += 2; // skip ':"'
-                while (*str != '"') {
-                    *s1 = *str;
-                    str++; s1++;
+    if (!strstr(buf, "error")) {
+        while (*str) {
+            if (*str == ':') {
+                // parse "jsonrpc"
+                if (!i) {
+                    str += 2; // skip ':"'
+                    while (*str != '"') {
+                        *s1 = *str;
+                        str++; s1++;
+                    }
+
+                } else if (i == 1) {
+                    // parse "result"
+
+                    // keep base pointer
+                    usp = str;
+
+                    str += 2; // skip ':"'
+                    while (*str != '"') {
+                        count++;
+                        str++;
+                    }
+
+                    // return back to usp
+                    str = usp;
+
+                    str += 2;
+                    while (*str != '"') {
+                        *s2 = *str;
+                        str++; s2++;
+                    }
+
+                } else {
+                    str += 2; // skip ':"'
+                    while (*str != '"') {
+                        *s3 = *str;
+                        str++; s3++;
+                    }
                 }
 
-            } else if (i == 1) {
-                // parse "result"
-
-                // keep base pointer
-                usp = str;
-
-                str += 2; // skip ':"'
-                while (*str != '"') {
-                    count++;
-                    str++;
-                }
-
-                // return back to usp
-                str = usp;
-
-                str += 2;
-                while (*str != '"') {
-                    *s2 = *str;
-                    str++; s2++;
-                }
-
-            } else {
-                str += 2; // skip ':"'
-                while (*str != '"') {
-                    *s3 = *str;
-                    str++; s3++;
-                }
+                i++;
             }
-
-            i++;
+            str++;
         }
-        str++;
+
+        // allocate space for result
+        rmq->result = (char*) malloc(count + 1);
+        strcpy(rmq->result, space);
+        rmq->err_flag = false;
+        rmq->id = atoi(box);
+
+    } else {
+        // look for error code and string
+        while (*str) {
+            if (*str == ':') {
+                // parse "jsonrpc"
+                if (!i) {
+                    str += 2; // skip ':"'
+                    while (*str != '"') {
+                        *s1 = *str;
+                        str++; s1++;
+                    }
+                } else if (i == 2) {
+                    // parse error
+                    str += 2; // skip ':-'
+                    while (isdigit(*str)) {
+                        *s3 = *str;
+                        str++; s3++;
+                    }
+                } else if (i == 3) {
+                    str += 2; // skip ':-'
+                    while (isalpha(*str) || !ispunct(*str)) {
+                        *s2 = *str;
+                        str++; s2++;
+                    }
+                }
+                i++;
+            }
+            str++;
+        }
+
+        rmq->result = (char*) malloc(strlen(space) + strlen(box) + 3);
+        rmq->err_flag = true;
+
+        sprintf(rmq->result, "%s: %s", box, space);
+
     }
 
-    // allocate space for result
-    rmq->result = (char*) malloc(count + 1);
-    strcpy(rmq->result, space);
-
-    rmq->id = atoi(box);
-    rmq->next = NULL;
+    free(space);
+    free(box);
 }
 
 
