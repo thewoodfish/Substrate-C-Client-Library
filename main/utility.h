@@ -50,7 +50,8 @@ extern char* alloc_mem(const char* str);
 extern void zero_buffer();
 extern void parse_json_string(struct Req_queue* rmq, char* buf);
 extern void reset_flag();
-extern void append_rpc_message(struct Req_queue* rmq);
+extern void append_rpc_message(struct Req_queue* req);
+extern void remove_rpc_message(struct Req_queue* req);
 
 
 

@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "utility.h"
+#include "substrate_interface.h"
 
 
 // global buffer - 4KB
@@ -193,9 +194,57 @@ void reset_flag() {
 
 
 /**
- * @brief Append message to RPC linked list
+ * @brief Append message to RMQ linked list
+ * 
+ * @param req A pointer to the request message
  * 
  */
-void append_rpc_message(struct Rmq_queue* req) {
+void append_rpc_message(struct Req_queue* req) {
+    struct Req_queue* start = Self.rpc_message_queue;
+    struct Req_queue* end = Self.rpc_message_queue;
+    
+    if (start == NULL) 
+        start = req;
+    else {
+        // else keep looping unti end
+        while (end != NULL) 
+            end = end->next;
 
+        end->next = req;
+    }
+}
+
+
+/**
+ * @brief Delete message from RMQ linked list
+ * 
+ * @param req A pointer to the request message
+ * 
+ */
+void remove_rpc_message(struct Req_queue* req) {
+    struct Req_queue* start = Self.rpc_message_queue;
+    struct Req_queue* prev;
+
+    if (start == req) {
+        if (start->next != NULL) 
+            Self.rpc_message_queue = start->next;
+        else 
+            Self.rpc_message_queue = NULL;
+
+        free(req);
+        return;
+
+    } else {        
+        while (start != NULL && start != req) {
+            prev = start;
+            start = start->next;
+        }
+
+        if (start == NULL)
+            return;
+
+        prev->next = start->next;
+
+        free(start);
+    }
 }

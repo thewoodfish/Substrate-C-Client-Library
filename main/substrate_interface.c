@@ -112,13 +112,14 @@ int close_websocket()
 * @returns a struct with the parsed result of the request.
 */
 
-void rpc_request(char* method, char** params, void* result_handler)
+char* rpc_request(char* method, char** params, void* result_handler)
 {
     struct Payload pl;
     int request_id, update_nr, subscription_id;
     char* json_string;
     char* json_body = NULL;
     struct Req_queue* req; 
+    struct Req_queue* rmq;
 
     // first allocate RMQ struct
     req = (struct Req_queue*) malloc(sizeof(__RMQ));
@@ -134,7 +135,7 @@ void rpc_request(char* method, char** params, void* result_handler)
     pl.params = params;
     pl.id = request_id;
 
-    printf("RPC request #%d: \"%s\"", request_id, method);
+    fprintf(stderr, "RPC request #%d: \"%s\"\n", request_id, method);
 
     if (Self.websocket) {
         // convert to JSON string
@@ -168,15 +169,36 @@ void rpc_request(char* method, char** params, void* result_handler)
 
             // extract fields & data from JSON string
             parse_json_string(req, buffer);
-
-            fprintf(stderr, "%s is the package with version %d", req->result, req->id);
-
-            // chain to linked list
-            append_rpc_message(req);
             zero_buffer();
 
-            // check for error in result
+            /******** WEBSOCKET SUBSCRIPTIONS ***********/
+            // // chain to linked list
+            // append_rpc_message(req);
+
+            // // search for subscriptions
+            // rmq = Self.rpc_message_queue;
+            // while (rmq != NULL) {
+            //     if (rmq->id && rmq->id == request_id) {
+
+            //         if (result_handler != NULL) {
+            //             // Set subscription ID and only listen to messages containing this ID
+            //             subscription_id = rmq->id;
+            //             fprintf(stderr, "Websocket subscription [%d] created", subscription_id);
+            //         } else {
+            //             json_body = alloc_mem(rmq->result);
+            //             strcpy(json_body, rmq->result);
+            //         }
+
+            //         // remove from queue
+            //         remove_rpc_message(rmq);
+            //     }
+            // }
+            /******** WEBSOCKET SUBSCRIPTIONS ***********/
+
+            json_body = req->result;
         }
+
+        return json_body;
     }
 }
 

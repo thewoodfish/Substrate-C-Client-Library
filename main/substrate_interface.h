@@ -21,7 +21,7 @@ static struct Substrate {
     char* token_decimal;
     char* token_symbol;
 
-    struct Rmq* rpc_message_queue;
+    struct Req_queue* rpc_message_queue;
     char* mock_extrinsics;
 
     struct Dh* default_handlers;
@@ -47,7 +47,7 @@ extern struct Substrate* init_client(
     bool use_remote_preset, struct Ws_option* ws_options, bool auto_discover, bool auto_reconnect
 );
 static void connect_websocket();
-extern void rpc_request(char* method, char** params, void* result_handler);
+extern char* rpc_request(char* method, char** params, void* result_handler);
 
 
 
