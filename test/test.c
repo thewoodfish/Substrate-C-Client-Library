@@ -50,9 +50,11 @@ int main(void) {
 
     // puts(json_dump_payload(&pl));
 
-    char buf[] = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"id\":null}";
-    // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":\"4.0.0-dev-e9c1aac\",\"id\":\"1\"}";
-    parse_json_string(buf);
+    // char buf[] = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"id\":null}";
+    // // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":\"4.0.0-dev-e9c1aac\",\"id\":\"1\"}";
+    // parse_json_string(buf);
+
+    printf("%s\n", slice("wss://westend-rpc.polkadot.io", buffer, 0, 6));
 
 }
 

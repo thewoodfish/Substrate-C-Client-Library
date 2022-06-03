@@ -51,6 +51,7 @@ extern void close_websocket();
 static char* rpc_request(char* method, char** params, void* result_handler);
 extern char* sc_name();
 static void free_all_rmq();
+extern void sc_properties();
 
 
 

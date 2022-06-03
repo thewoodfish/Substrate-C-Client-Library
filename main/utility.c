@@ -33,8 +33,9 @@ char* slice(const char* str, char* result, size_t start, size_t end) {
  * @brief Zeroes out the global buffer
  * 
  */
-void zero_buffer() {
+bool zero_buffer() {
     memset(buffer, 0x00, strlen(buffer));
+    return true;
 }
 
 /**
@@ -83,13 +84,18 @@ char* json_dump_payload(struct Payload* p)
     char* sp = buf;
     char** io = p->params;
 
-    for (j = 0; io[j]; j++) {
-        sprintf(sp, "%s, ", io[j]);
-        count += strlen(io[j]) + 3;
-        sp += count - 1;
-    }
+    if (io != NULL) {
+        for (j = 0; io[j]; j++) {
+            sprintf(sp, "%s, ", io[j]);
+            count += strlen(io[j]) + 3;
+            sp += count - 1;
+        }
 
-    sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"%s\",\"id\":\"%i\"}", p->jsonrpc, p->method, slice(buf, dummy, 0, count), p->id);
+        slice(buf, dummy, 0, count);
+
+        sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"{%s}\",\"id\":\"%i\"}", p->jsonrpc, p->method, dummy, p->id);
+    } else 
+        sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"{%s}\",\"id\":\"%i\"}", p->jsonrpc, p->method, "", p->id);
     
     free(dummy);
     free(buf);
@@ -131,10 +137,10 @@ void parse_json_string(struct Req_queue* rmq, char* buf)
     // some sort of stack base pointer
     char* usp;
 
-    int i, count;
+    int i, count, j;
 
     // extract result, id and version
-    i = count = 0;
+    i = count = j = 0;
 
     if (!strstr(buf, "error")) {
         while (*str) {
@@ -148,26 +154,26 @@ void parse_json_string(struct Req_queue* rmq, char* buf)
                     }
 
                 } else if (i == 1) {
-                    // parse "result"
 
-                    // keep base pointer
-                    usp = str;
+                        // keep base pointer
+                        usp = str;
 
-                    str += 2; // skip ':"'
-                    while (*str != '"') {
-                        count++;
-                        str++;
-                    }
+                        str += 2; // skip ':"'
+                        while (*str != '"' && *str != '}') {
+                            count++;
+                            str++;
+                        }
 
-                    // return back to usp
-                    str = usp;
+                        if (count) {
+                            // return back to usp
+                            str = usp;
 
-                    str += 2;
-                    while (*str != '"') {
-                        *s2 = *str;
-                        str++; s2++;
-                    }
-
+                            str += 2;
+                            while (*str != '"'  && *str != '}') {
+                                *s2 = *str;
+                                str++; s2++;
+                            }
+                        }
                 } else {
                     str += 2; // skip ':"'
                     while (*str != '"') {
@@ -182,8 +188,14 @@ void parse_json_string(struct Req_queue* rmq, char* buf)
         }
 
         // allocate space for result
-        rmq->result = (char*) malloc(count + 1);
-        strcpy(rmq->result, space);
+        if (count) {
+            rmq->result = (char*) malloc(count + 1);
+            strcpy(rmq->result, space);
+        } else {
+            rmq->result = (char*) malloc(6);
+            strcpy(rmq->result, "empty");
+        }
+
         rmq->err_flag = false;
         rmq->id = atoi(box);
 

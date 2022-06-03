@@ -10,6 +10,8 @@
 
 #include "config.h"
 
+#define HAVE_LIBSSL 1
+
 
 #ifdef HAVE_LIBSSL
 #include <openssl/ssl.h>

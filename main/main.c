@@ -18,8 +18,9 @@ int main(void) {
     // initialize connection to node
     char* param[] = {NULL};
 
-    init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
-    fprintf(stderr, "The name of the chain is %s\n", sc_name());
+    init_client("wss://polkadot-rpc.dwellir.com", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
+    // fprintf(stderr, "The name of the chain is %s\n", sc_name()); 127.0.0.1:9944
 
-    close_websocket();
+    sc_properties();
+    // close_websocket();
 }

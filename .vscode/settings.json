@@ -6,6 +6,7 @@
         "utility.h": "c",
         "network.h": "c",
         "wsclient.h": "c",
-        "substrate_interface.h": "c"
+        "substrate_interface.h": "c",
+        "ssl.h": "c"
     }
 }

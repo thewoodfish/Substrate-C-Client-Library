@@ -4,8 +4,10 @@
 //  gcc file.c o -file
 //  AF_INET = IPv4
 
-// gcc main.c substrate_interface.c utility.c network.c ../websocket/wsclient.c ../websocket/sha1.c ../websocket/base64.c -lpthread
+// gcc main.c substrate_interface.c utility.c network.c ../websocket/wsclient.c ../websocket/sha1.c ../websocket/base64.c -lpthread -lssl -lcrypto
+// ./target/release/node-template --tmp --dev
 
+// {"jsonrpc":"2.0","result":{"ss58Format":0,"tokenDecimals":10,"tokenSymbol":"DOT"},"id":"1"}
 
 // pslm 24 2
 

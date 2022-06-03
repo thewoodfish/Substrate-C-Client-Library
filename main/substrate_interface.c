@@ -26,6 +26,8 @@ void init_client(
         exit(1);
     }
 
+    char* qbuf = (char*) malloc(10); // dummy buffer used for comparisons
+
     // runtime config 
     Self.runtime_config = runtime_config;
     Self.cache_region = cache_region;
@@ -51,7 +53,7 @@ void init_client(
         Self.ws_options->write_limit = !Self.ws_options->write_limit ?  (long) pow(2, 32) : 0;
     }
 
-    if (Self.url && (!strcmp(slice(Self.url, buffer, 0, 5), "wss://") || !strcmp(slice(Self.url, buffer, 0, 4), "ws://"))) {
+    if (Self.url && ((!strcmp(slice(Self.url, buffer, 0, 6), "wss://") && zero_buffer()) || !strcmp(slice(Self.url, qbuf, 0, 5), "ws://"))) {
         zero_buffer();
         connect_websocket();
     }
@@ -67,6 +69,8 @@ void init_client(
     Self.config->auto_discover = auto_discover ? auto_discover : true; 
     Self.config->auto_reconnect = auto_reconnect ? auto_reconnect : true;
 
+    free(qbuf);
+
     // Self.session = session();
 
     // reload_type_registry(use_remote_preset, auto_discover);
@@ -79,15 +83,19 @@ void init_client(
 
 static void connect_websocket()
 {
-    if (Self.url && (!strcmp(slice(Self.url, buffer, 0, 5), "wss://") || !strcmp(slice(Self.url, buffer, 0, 4), "ws://"))) {
+    char* qbuf = (char*) malloc(10); // dummy buffer used for comparisons
+
+    if (Self.url && (!strcmp(slice(Self.url, buffer, 0, 6), "wss://") || !strcmp(slice(Self.url, qbuf, 0, 5), "ws://"))) {
         printf("Connecting to %s ...\n", Self.url);
 
         // zero out buffer
         zero_buffer();
-        
+
         // create connection and return socket descriptor
         Self.websocket = connect_websock(Self.url);
     }
+
+    free(qbuf);
 }
 
 /**
@@ -206,6 +214,7 @@ static char* rpc_request(char* method, char** params, void* result_handler)
             /******** WEBSOCKET SUBSCRIPTIONS ***********/
 
             json_body = req->result;
+
         }
 
         return json_body;
@@ -224,7 +233,7 @@ static void free_all_rmq() {
 
 char* sc_name() {
     char* buf;
-    char* param[] = {"n", NULL};
+    char** param = NULL;
 
     // check for errors
     if (buf = rpc_request("system_name", param, NULL)) {
@@ -235,6 +244,17 @@ char* sc_name() {
     }
 
     Self.name;
+}
+
+void sc_properties() {
+    char* buf;
+    char** param = NULL;
+
+    // check for errors
+    if (buf = rpc_request("system_properties", param, NULL)) {
+       fprintf(stderr, "___%s\n", buf);
+    }
+
 }
 
 

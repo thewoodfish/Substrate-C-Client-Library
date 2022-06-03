@@ -13,7 +13,7 @@
 #undef HAVE_LIBPTHREAD
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
-#undef HAVE_LIBSSL
+#undef HAVE_LIBSSL 
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */

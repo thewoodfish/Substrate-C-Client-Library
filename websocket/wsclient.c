@@ -13,11 +13,18 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
+#include <resolv.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/crypto.h>
+
+
 #include "wsclient.h"
 #include "config.h"
 #include "sha1.h"
 #include "base64.h"
 
+#define HAVE_LIBSSL 1
 
 //Define errors
 char* err[] = {
@@ -55,6 +62,7 @@ void libwsclient_run(wsclient *c) {
 		c->URI = NULL;
 		pthread_mutex_unlock(&c->lock);
 	}
+
 	if(c->sockfd) {
 		pthread_create(&c->run_thread, NULL, libwsclient_run_thread, (void *)c);
 	}
@@ -524,9 +532,10 @@ wsclient *libwsclient_new(const char *URI) {
 		fprintf(stderr, "Unable to create handshake thread.\n");
 		exit(WS_EXIT_PTHREAD_CREATE);
 	}
-
+	
 	return client;
 }
+
 void *libwsclient_handshake_thread(void *ptr) {
 	wsclient *client = (wsclient *)ptr;
 	wsclient_error *err = NULL;
@@ -987,6 +996,8 @@ int libwsclient_send(wsclient *client, const char *strdata)  {
 	int i, sockfd;
 	unsigned int frame_size;
 	char *data;
+
+	// fprintf(stderr, "%s\n", strdata); for debbuging
 
 	sockfd = client->sockfd;
 
