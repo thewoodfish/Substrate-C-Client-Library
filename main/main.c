@@ -16,14 +16,11 @@
 
 int main(void) {
     // initialize connection to node
-    char* param[] = {NULL};
 
     init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
-    set_ss58_format(45);
-    fprintf(stderr, "The Samaritan coin symbol is %d\n", sc_ss58_format()); 
+    // fprintf(stderr, "The chain head is %s\n", sc_get_chain_head()); 
+    sc_get_chain_block("", 23, NULL); 
+    
 
-    set_token_decimal(10);
-
-    // sc_properties();
     close_websocket();
 }

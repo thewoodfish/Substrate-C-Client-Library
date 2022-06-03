@@ -341,3 +341,66 @@ int set_ss58_format(int val) {
 
     return Self.ss58_format;
 }
+
+// def implements_scaleinfo(self) -> Optional[bool]:
+//         if self.metadata_decoder:
+//             return self.metadata_decoder.portable_registry is not None
+
+// bool sc_implements_scaleinfo() {
+//     if (Self.m_decoder != NULL) 
+
+// }
+
+char* sc_get_chain_head() {
+    char** param = NULL;
+    return rpc_request("chain_getHead", param, NULL);
+}
+
+char* sc_get_chain_finalised_head() {
+    char** param = NULL;
+    return rpc_request("chain_getFinalisedHead", param, NULL);
+}
+
+char* sc_get_block_hash(int block_id) {
+    char* buf;
+    char* param[2];
+    char* result;
+
+    buf = (char*) malloc(10);
+
+    sprintf(buf, "%d", block_id);
+    add_param(param, buf);
+
+    result = rpc_request("chain_getBlockHash", param, NULL);
+
+    free(buf);
+    return result;
+}
+
+static void add_param(char** param, char* buf) {
+    param[0] = buf;
+    param[1] = NULL;
+}
+
+char* sc_get_chain_block(const char* block_hash, int block_id, struct Metadata_Decoder* md) 
+{
+    char* param[2];
+    char* buf;
+
+    if (block_id)
+        block_hash = sc_get_block_hash(block_id);
+
+    add_param(param, (char*) block_hash);
+
+    buf = rpc_request("chain_getBlock", param, NULL);
+
+    // if error or is_empty
+    if (!strcmp(buf, "empty") || strstr(buf, "Error")) {
+        clear_n_copy(buf, "0");
+        return buf;
+    } else {
+
+        // Extend extrinsics with mock_extrinsics for e.g. performance test
+        // ----
+    }
+}

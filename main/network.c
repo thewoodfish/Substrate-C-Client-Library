@@ -33,7 +33,7 @@ int onerror(wsclient *c, wsclient_error *err) {
 }
 
 int onmessage(wsclient *c, wsclient_message *msg) {
-	// fprintf(stderr, "onmessage: (%llu): %s\n", msg->payload_len, msg->payload);
+	fprintf(stderr, "onmessage: (%llu): %s\n", msg->payload_len, msg->payload);
 
 	// copy into buffer
 	clear_n_copy(buffer, msg->payload);

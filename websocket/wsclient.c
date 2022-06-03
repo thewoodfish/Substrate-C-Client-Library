@@ -80,8 +80,8 @@ void *libwsclient_run_thread(void *ptr) {
 		for(i = 0; i < n; i++)
 			libwsclient_in_data(c, buf[i]);
 
-		// read once for now
-		n = 0;
+		// // read once for now
+		// n = 0;
 	} while(n > 0);
 
 	if(n < 0) {

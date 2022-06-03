@@ -26,6 +26,7 @@ static struct Substrate {
 
     struct Dh* default_handlers;
     int metadata_decoder;
+    struct Metadata_Decoder* m_decoder;
     double runtime_version;
     double transaction_version;
     char* block_hash;
@@ -60,5 +61,13 @@ extern char* sc_token_symbol();
 extern char* set_token_symbol(const char* token);
 extern int sc_ss58_format();
 extern int set_ss58_format(int val);
+extern char* sc_get_chain_head();
+extern char* sc_get_chain_finalised_head();
+extern char* sc_get_block_hash(int block_i);
+extern char* sc_get_chain_block(const char* block_hash, int block_id, struct Metadata_Decoder* md);
+static void add_param(char** param, char* buf);
+
+
+
 
 

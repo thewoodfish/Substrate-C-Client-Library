@@ -26,6 +26,11 @@ struct Runtime_Config {
     int ss58_format;
 } __R_con;
 
+// metadate decoder
+struct Metadata_Decoder {
+    bool portable_registry;
+} __Met_data;
+
 // RPC message queue (a linked list)
 struct Req_queue {
     char jsonrpc[5];
@@ -65,6 +70,7 @@ extern void reset_flag();
 extern void append_rpc_message(struct Req_queue* req);
 extern void remove_rpc_message(struct Req_queue* req);
 extern void parse_system_props(struct Props* p, char* buf);
+static bool in_array(char** array, char* str);
 
 
 
