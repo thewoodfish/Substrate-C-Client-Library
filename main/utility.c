@@ -45,7 +45,7 @@ bool zero_buffer() {
  * @param source The mem region to copy from
  * 
  */
-char* clear_n_copy(char* dest, char* source) {
+char* clear_n_copy(char* dest, const char* source) {
     memset(dest, 0x00, strlen(dest));
     strcpy(dest, source);
 }
@@ -157,21 +157,51 @@ void parse_json_string(struct Req_queue* rmq, char* buf)
 
                         // keep base pointer
                         usp = str;
-
-                        str += 2; // skip ':"'
-                        while (*str != '"' && *str != '}') {
-                            count++;
+                        while (*str) {
+                            if (*str == '}') j++;
                             str++;
                         }
 
-                        if (count) {
-                            // return back to usp
-                            str = usp;
+                        // return str back to right position
+                        str = usp;
 
-                            str += 2;
-                            while (*str != '"'  && *str != '}') {
-                                *s2 = *str;
-                                str++; s2++;
+                        // if result is not a struct-like string
+                        if (j == 1) {
+
+                            str += 2; // skip ':"'
+                            while (*str != '"') {
+                                count++;
+                                str++;
+                            }
+
+                            if (count) {
+                                // return back to usp
+                                str = usp;
+
+                                str += 2;
+                                while (*str != '"') {
+                                    *s2 = *str;
+                                    str++; s2++;
+                                }
+                            }
+                        } else {
+                            // parse struct like string
+                            str += 2; // skip ':{"'
+
+                            while (*(str) != '}') {
+                                count++;
+                                str++;
+                            }
+
+                            if (count) {
+                                // return back to usp
+                                str = usp;
+
+                                str += 2;
+                                while (*(str) != '}') {
+                                    *s2 = *str;
+                                    str++; s2++;
+                                }
                             }
                         }
                 } else {
@@ -303,4 +333,60 @@ void remove_rpc_message(struct Req_queue* req) {
 
         free(start);
     }
+}
+
+void parse_system_props(struct Props* p, char* buf) 
+{
+    // parse system properties
+    char* str;
+    int i;
+
+    char* s1;
+    char* s2;
+    char* s3;
+
+    i = 0;
+    str = buf;
+
+    char* buf1 = (char*) malloc(10);
+    char* buf2 = (char*) malloc(10);
+    char* buf3 = (char*) malloc(10);
+
+    s1 = buf1;
+    s2 = buf2;
+    s3 = buf3;
+
+    while (*str) {
+        if (*str == ':') {
+            if (!i) {
+                str++;
+                while (*str != ',') {
+                    *s1 = *str;
+                    s1++, str++;
+                }
+            } else if (i == 1) {
+                str++;
+                while (*str != ',') {
+                    *s2 = *str;
+                    s2++, str++;
+                }
+            } else {
+                str += 2;
+                while (*str != '"') {
+                    *s3 = *str;
+                    s3++, str++;
+                }
+            }
+            i++;
+        }
+        str++;
+    }
+
+    p->ss58Format = atoi(buf1);
+    p->tokenDecimals = atoi(buf2);
+    strcpy(p->tokenSymbol, buf3);
+
+    free(buf1);
+    free(buf2);
+    free(buf3);
 }

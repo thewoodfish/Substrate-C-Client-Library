@@ -2,7 +2,6 @@
  * Author: Woodfish
  * File: substrate_interface.h
  * Desc: A specialized library to interface with a Substrate node.
- * Further: Based on the Python substrate library by the Polkascan Group
  * Date: May 27 20:47
  * Licence: MIT
 */
@@ -32,7 +31,12 @@ void init_client(
     Self.runtime_config = runtime_config;
     Self.cache_region = cache_region;
 
-    Self.ss58_format = ss58_format ? ss58_format : 42; // default is 42
+    // allocate space for properties
+    Self.properties = (struct Props*) malloc(sizeof(__Pr));
+    Self.properties->ss58Format = ss58_format ? ss58_format : 42; // default is 42
+
+    // allocate space for runtime config parameters
+    Self.runtime_config = (struct Runtime_Config*) malloc(sizeof(__R_con));
 
     Self.type_registry_preset = type_registry_preset ? alloc_mem(type_registry_preset) : NULL;
     strcpy(Self.type_registry_preset, type_registry_preset);
@@ -108,7 +112,7 @@ void close_websocket()
     close_ws();
 
     // clear all RPC messages
-    free_all_rmq();
+    free_all_mem();
 }
 
 /**
@@ -224,7 +228,7 @@ static char* rpc_request(char* method, char** params, void* result_handler)
 /**
 * @brief Free all RPC message queue
 */
-static void free_all_rmq() {
+static void free_all_mem() {
     while (Self.rpc_message_queue != NULL) {
         remove_rpc_message(Self.rpc_message_queue);
         Self.rpc_message_queue = Self.rpc_message_queue->next;
@@ -243,18 +247,97 @@ char* sc_name() {
         }
     }
 
-    Self.name;
+    return Self.name;
 }
 
-void sc_properties() {
+struct Props* sc_properties() {
+    char* buf;
+    char** param = NULL;
+
+    if (!strlen(Self.properties->tokenSymbol)) {
+        buf = rpc_request("system_properties", param, NULL);
+        if (strcmp(buf, "empty")) { // if buf is not "empty"
+            parse_system_props(Self.properties, buf);
+        }
+    }
+
+    return Self.properties;
+}
+
+char* sc_chain() {
     char* buf;
     char** param = NULL;
 
     // check for errors
-    if (buf = rpc_request("system_properties", param, NULL)) {
-       fprintf(stderr, "___%s\n", buf);
+    if (buf = rpc_request("system_chain", param, NULL)) {
+        if (Self.chain == NULL) {
+            Self.chain = alloc_mem(buf);
+            strcpy(Self.chain, buf);
+        }
     }
 
+    return Self.chain;
 }
 
+char* sc_version() {
+    char* buf;
+    char** param = NULL;
 
+    // check for errors
+    if (buf = rpc_request("system_version", param, NULL)) {
+        if (Self.version == NULL) {
+            Self.version = alloc_mem(buf);
+            strcpy(Self.version, buf);
+        }
+    }
+
+    return Self.version;
+}
+
+int sc_token_decimals() {
+    if (!Self.token_decimals) 
+        if (Self.properties->tokenDecimals) 
+            Self.token_decimals = Self.properties->tokenDecimals;
+    
+    return Self.token_decimals;
+}
+
+int set_token_decimal(int val) {
+    Self.token_decimals = val;
+
+    return Self.token_decimals;
+}
+
+char* sc_token_symbol() {
+    if (!strlen(Self.token_symbol)) {
+        if (strlen(Self.properties->tokenSymbol)) 
+            strcpy(Self.token_symbol, Self.properties->tokenSymbol);
+        else 
+            strcpy(Self.token_symbol, "UNIT");
+    }
+
+    return Self.token_symbol;
+}
+
+char* set_token_symbol(const char* token) {
+    clear_n_copy(Self.token_symbol, token);
+
+    return Self.token_symbol;
+}
+
+int sc_ss58_format() {
+    if (!Self.ss58_format) 
+        if (Self.properties->ss58Format) 
+            Self.ss58_format = Self.properties->ss58Format;
+    else
+        Self.ss58_format = 42;
+    
+    return Self.ss58_format;
+}
+
+int set_ss58_format(int val) {
+    Self.ss58_format = val;
+    Self.runtime_config->ss58_format = val;
+
+    return Self.ss58_format;
+}

@@ -21,9 +21,18 @@ struct Req_queue {
     struct Req_queue* next;
 } __RMQ; 
 
+
+// chain properties
+struct Props {
+    int ss58Format;
+    int tokenDecimals;
+    char tokenSymbol[6];
+} __Pr;
+
 char* json_dump_payload(struct Payload* p);
 char* slice(const char* str, char* result, size_t start, size_t end);
-extern struct Req_queue* parse_json_string(char* buf);
+void parse_json_string(char* buf);
+void parse_system_props(struct Props* p, char* buf);
 
 char buffer[1024];
 char buf [1024];
@@ -39,6 +48,8 @@ char* slice(const char* str, char* result, size_t start, size_t end) {
 int main(void) {
 
     // struct Payload pl;
+    struct Props* p;
+
     // char* p[] = {
     //     "Spain", "France", NULL
     // };
@@ -51,10 +62,20 @@ int main(void) {
     // puts(json_dump_payload(&pl));
 
     // char buf[] = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"id\":null}";
-    // // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":\"4.0.0-dev-e9c1aac\",\"id\":\"1\"}";
-    // parse_json_string(buf);
+    char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"ss58Format\":0,\"tokenDecimals\":10,\"tokenSymbol\":\"DOT\"},\"id\":\"1\"}";
+    // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":\"4.0.0-dev-e9c1aac\",\"id\":\"1\"}";
+    parse_json_string(buf);
 
-    printf("%s\n", slice("wss://westend-rpc.polkadot.io", buffer, 0, 6));
+    // printf("%s\n", slice("wss://westend-rpc.polkadot.io", buffer, 0, 6));
+
+    char space[] = "ss58Format\":0,\"tokenDecimals\":10,\"tokenSymbol\":\"DOT";
+    p = (struct Props*) malloc(sizeof(__Pr));
+
+    parse_system_props(p, space);
+
+    printf("The ss58 format is %d\n", p->ss58Format);
+    printf("The token decimal is %d\n", p->tokenDecimals);
+    printf("The token symbol is %s\n", p->tokenSymbol);
 
 }
 
@@ -77,7 +98,7 @@ char* json_dump_payload(struct Payload* p)
     return buffer;
 }
 
-struct Req_queue* parse_json_string(char* buf) {
+void parse_json_string(char* buf) {
     // first allocate RMQ struct
     struct Req_queue* rmq = malloc(sizeof(__RMQ));
     
@@ -93,10 +114,10 @@ struct Req_queue* parse_json_string(char* buf) {
     // some sort of stack base pointer
     char* usp;
 
-    int i, count;
+    int i, count, j;
 
     // extract result, id and version
-    i = count = 0;
+    i = count = j = 0;
 
     if (!strstr(buf, "error")) {
         while (*str) {
@@ -110,26 +131,56 @@ struct Req_queue* parse_json_string(char* buf) {
                     }
 
                 } else if (i == 1) {
-                    // parse "result"
 
-                    // keep base pointer
-                    usp = str;
+                        // keep base pointer
+                        usp = str;
+                        while (*str) {
+                            if (*str == '}') j++;
+                            str++;
+                        }
 
-                    str += 2; // skip ':"'
-                    while (*str != '"') {
-                        count++;
-                        str++;
-                    }
+                        // return str back to right position
+                        str = usp;
 
-                    // return back to usp
-                    str = usp;
+                        // if result is not a struct-like string
+                        if (j == 1) {
 
-                    str += 2;
-                    while (*str != '"') {
-                        *s2 = *str;
-                        str++; s2++;
-                    }
+                            str += 2; // skip ':"'
+                            while (*str != '"') {
+                                count++;
+                                str++;
+                            }
 
+                            if (count) {
+                                // return back to usp
+                                str = usp;
+
+                                str += 2;
+                                while (*str != '"') {
+                                    *s2 = *str;
+                                    str++; s2++;
+                                }
+                            }
+                        } else {
+                            // parse struct like string
+                            str += 2; // skip ':{"'
+
+                            while (*(str) != '}') {
+                                count++;
+                                str++;
+                            }
+
+                            if (count) {
+                                // return back to usp
+                                str = usp;
+
+                                str += 2;
+                                while (*(str) != '}') {
+                                    *s2 = *str;
+                                    str++; s2++;
+                                }
+                            }
+                        }
                 } else {
                     str += 2; // skip ':"'
                     while (*str != '"') {
@@ -144,10 +195,20 @@ struct Req_queue* parse_json_string(char* buf) {
         }
 
         // allocate space for result
-        rmq->result = (char*) malloc(count + 1);
-        strcpy(rmq->result, space);
+        if (count) {
+            rmq->result = (char*) malloc(count + 1);
+            strcpy(rmq->result, space);
+        } else {
+            rmq->result = (char*) malloc(6);
+            strcpy(rmq->result, "empty");
+        }
 
+        printf("%s\n", rmq->result);
+        printf("%s\n", box);
+
+        rmq->error = 0;
         rmq->id = atoi(box);
+
     } else {
         // look for error code and string
         while (*str) {
@@ -178,19 +239,73 @@ struct Req_queue* parse_json_string(char* buf) {
             str++;
         }
 
-
-        printf("%s\n", box);
-        printf("%ld\n", strlen(space));
-
         rmq->result = (char*) malloc(strlen(space) + strlen(box) + 3);
         rmq->error = 1;
 
         sprintf(rmq->result, "%s: %s", box, space);
 
-        printf("%s\n", rmq->result);
-
     }
 
+    free(rmq);
     free(space);
     free(box);
 }
+
+void parse_system_props(struct Props* p, char* buf) 
+{
+    // parse system properties
+    char* str;
+    int i;
+
+    char* s1;
+    char* s2;
+    char* s3;
+
+    i = 0;
+    str = buf;
+
+    char* buf1 = (char*) malloc(10);
+    char* buf2 = (char*) malloc(10);
+    char* buf3 = (char*) malloc(10);
+
+    s1 = buf1;
+    s2 = buf2;
+    s3 = buf3;
+
+    while (*str) {
+        if (*str == ':') {
+            if (!i) {
+                str++;
+                while (*str != ',') {
+                    *s1 = *str;
+                    s1++, str++;
+                }
+            } else if (i == 1) {
+                str++;
+                while (*str != ',') {
+                    *s2 = *str;
+                    s2++, str++;
+                }
+            } else {
+                str += 2;
+                while (*str != '"') {
+                    *s3 = *str;
+                    s3++, str++;
+                }
+            }
+            i++;
+        }
+        str++;
+    }
+
+    p->ss58Format = atoi(buf1);
+    p->tokenDecimals = atoi(buf2);
+    strcpy(p->tokenSymbol, buf3);
+
+    free(buf1);
+    free(buf2);
+    free(buf3);
+}
+
+
+

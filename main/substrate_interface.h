@@ -3,26 +3,26 @@ static struct Substrate {
     char* url;
     int port;
     int websocket;
-    int ss58_format;
     void* type_registry;
     char* type_registry_preset;
     void* cache_region;
-    void* runtime_config;
+    struct Runtime_Config* runtime_config;
     struct Ws_option* ws_options;
 
     int request_id;
 
     // internal variables
-    double version;
+    char* version;
     char* name;
-    char* properties;
+    struct Props* properties;
     char* chain;
-    
-    char* token_decimal;
-    char* token_symbol;
 
     struct Req_queue* rpc_message_queue;
     char* mock_extrinsics;
+
+    int token_decimals;
+    char token_symbol[6];
+    int ss58_format;
 
     struct Dh* default_handlers;
     int metadata_decoder;
@@ -50,9 +50,15 @@ static void connect_websocket();
 extern void close_websocket();
 static char* rpc_request(char* method, char** params, void* result_handler);
 extern char* sc_name();
-static void free_all_rmq();
-extern void sc_properties();
-
-
+static void free_all_mem();
+extern struct Props* sc_properties();
+extern char* sc_chain();
+extern char* sc_version();
+extern int sc_token_decimals();
+extern int set_token_decimal(int val);
+extern char* sc_token_symbol();
+extern char* set_token_symbol(const char* token);
+extern int sc_ss58_format();
+extern int set_ss58_format(int val);
 
 
