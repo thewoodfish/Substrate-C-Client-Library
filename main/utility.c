@@ -69,6 +69,16 @@ char* ip_to_url(char* url) {
     return IPbuf;
 }
 
+static bool in_array(char** array, char* str) {
+    int i;
+
+    for (i = 0; array[i]; i++)
+        if (!strcmp(array[i], str)) 
+            return true;
+
+    return false;
+}
+
 /**
  * @brief Converts a payload sruct to JSON string
  *
@@ -78,6 +88,8 @@ char* ip_to_url(char* url) {
 char* json_dump_payload(struct Payload* p) 
 {
     int j, count = 0;
+    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", NULL };
+
     char* dummy = (char*) malloc(1024);
     char* buf = (char*) malloc(1024);
 
@@ -86,16 +98,29 @@ char* json_dump_payload(struct Payload* p)
 
     if (io != NULL) {
         for (j = 0; io[j]; j++) {
-            sprintf(sp, "%s, ", io[j]);
+            if (io[j + 1])
+                sprintf(sp, "%s, ", io[j]);
+            else
+                sprintf(sp, "%s", io[j]);
+
             count += strlen(io[j]) + 3;
             sp += count - 1;
         }
 
         slice(buf, dummy, 0, count);
 
-        sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"{%s}\",\"id\":\"%i\"}", p->jsonrpc, p->method, dummy, p->id);
-    } else 
-        sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"{%s}\",\"id\":\"%i\"}", p->jsonrpc, p->method, "", p->id);
+        if (in_array(special_params, p->method))  
+            sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":[\"%s\"],\"id\":\"%i\"}", p->jsonrpc, p->method, dummy, p->id);
+        else 
+            sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"{%s}\",\"id\":\"%i\"}", p->jsonrpc, p->method, dummy, p->id);
+
+    } else {
+
+        if (in_array(special_params, p->method))  
+            sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":[%s],\"id\":\"%i\"}", p->jsonrpc, p->method, "", p->id);
+        else
+            sprintf(buffer, "{\"jsonrpc\":\"%s\",\"method\":\"%s\",\"params\":\"{%s}\",\"id\":\"%i\"}", p->jsonrpc, p->method, "", p->id);
+    }
     
     free(dummy);
     free(buf);
@@ -390,3 +415,4 @@ void parse_system_props(struct Props* p, char* buf)
     free(buf2);
     free(buf3);
 }
+
