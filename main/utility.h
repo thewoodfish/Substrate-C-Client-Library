@@ -61,7 +61,7 @@ struct Payload {
 
 extern char* slice(const char* str, char* result, size_t start, size_t end);
 extern char* ip_to_url(char* url);
-extern char* clear_n_copy(char* dest, const char* source);
+extern void clear_n_copy(char* dest, const char* source);
 extern char* json_dump_payload(struct Payload* p);
 extern char* alloc_mem(const char* str);
 extern bool zero_buffer();
@@ -72,6 +72,13 @@ extern void remove_rpc_message(struct Req_queue* req);
 extern void parse_system_props(struct Props* p, char* buf);
 static bool in_array(char** array, char* str);
 extern void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf, bool once);
+extern void str_replace_special(char* str);
+extern void to_lower_case(char* str);
+extern void strip(char* str);
+extern char* get_type(struct Type_Reg* self, char* str);
+
+
+
 
 
 

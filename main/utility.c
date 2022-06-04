@@ -13,15 +13,17 @@
 #include <arpa/inet.h>
 #include "utility.h"
 #include "substrate_interface.h"
+#include "../scale-codec/runtime-configuration.h"
 
 
 // global buffer - 4KB
 char space[4096];
-char* buffer = space;
+char* buffer;
+
+buffer = space;
 
 // message flag { 1 to indicate a message has dropped into buffer }
 int flag = 0;
-
 
 // returns slice of string
 char* slice(const char* str, char* result, size_t start, size_t end) {
@@ -45,7 +47,7 @@ bool zero_buffer() {
  * @param source The mem region to copy from
  * 
  */
-char* clear_n_copy(char* dest, const char* source) {
+void clear_n_copy(char* dest, const char* source) {
     memset(dest, 0x00, strlen(dest));
     strcpy(dest, source);
 }
@@ -546,4 +548,137 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
     // printf("The sentence after replacement: %s\n", original);
     // clear buffer
     clear_n_copy(rbuf, original);
+}
+
+void str_replace_special(char* str)
+{
+    // try replicating 
+    // re.sub(r'^Box<(.+)>$', '', name, flags=re.IGNORECASE)
+
+    char* s1;
+    char* s2;
+    int i;
+    char* buf;
+    char *fl;
+    char *space;
+    char* s3;
+    char* sp;
+    bool j;
+
+    char start[] = "Box<(";
+    s1 = str;
+    s2 = start;
+
+    i = 0;
+    buf = (char*) malloc(255);
+    space = (char*) malloc(255);
+
+    sp = (char*) malloc(255);
+    s3 = sp;
+
+    fl = space;
+    j = false;
+
+    while (*s1) {
+        if (*s1 == *s2) {
+            // clear memory
+            memset(sp, 0, 255);
+            while (*s1 == *s2) {
+                *s3 = *s1;
+                s1++; s2++; i++; s3++; 
+            }
+
+
+            if (i == strlen(start)) {
+                i = 0;
+                // let s1 continue
+                while (*s1 != '>') 
+                    s1++;
+
+                // bring together
+                j = true;
+                memset(sp, 0, 255);
+                sprintf (sp, "%s%s", space, (s1 + 1));
+                break;
+            } else {
+                // update fl
+                s3 = sp;
+
+                while(*s3) {
+                    *fl = *s3;
+                    fl++; s3++;
+                }
+
+                i = 0;
+                s2 = start;
+            }
+
+        }
+
+        *fl = *s1;
+        s1++; fl++;
+    }
+
+    if (j)
+        clear_n_copy(str, sp);
+
+    free(buf);
+    free(space);
+    free(sp);
+}
+
+
+void to_lower_case(char* str) {
+    // convert string to lowercase
+    char *s;
+    s = str;
+
+    while (*s) {
+        *s = tolower(*s);
+        s++;
+    }
+}
+
+void strip(char* str) {
+    char* s;
+    char* b;
+    char* buf;
+    char* s1;
+
+    s = str;
+    b = &str[strlen(str) - 1];
+
+    buf = alloc_mem(str);
+    s1 = buf;
+
+    // skip leading whitespaces
+    while (isspace(*s)) s++;
+
+    // skip trailing whitespaces
+    while (isspace(*b)) b--;
+
+    while (*s && s != (b + 1)) {
+        *s1 = *s;
+        s++; s1++;
+    }
+
+    clear_n_copy(str, buf);
+    free(buf);
+}
+
+char* get_type(struct Type_Reg* self, char* str) 
+{
+    struct Types *ty, *curr;
+
+    if (self->types) {
+        ty = self->types;
+        while (ty) {
+            if (!strcmp(ty->name, str))
+                return ty->val;
+
+            ty = ty->next;
+        }
+    }
+
+    return NULL;
 }

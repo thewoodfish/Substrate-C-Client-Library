@@ -35,6 +35,10 @@ char* slice(const char* str, char* result, size_t start, size_t end);
 void parse_json_string(char* buf);
 void parse_system_props(struct Props* p, char* buf);
 void str_replace(const char* str, const char* old, const char* new, char* buf, bool once);
+void str_replace_special(char* str);
+void to_lower_case(char* str);
+void clear_n_copy(char* dest, const char* source);
+void strip(char* str);
 
 char buffer[1024];
 char buf [1024];
@@ -78,10 +82,33 @@ int main(void) {
     // printf("The ss58 format is %d\n", p->ss58Format);
     // printf("The token decimal is %d\n", p->tokenDecimals);
     // printf("The token symbol is %s\n", p->tokenSymbol);
-    char* buf = (char *) malloc(255);
-    str_replace("open open -- open", "open", "close", buf, true);
+    // char* buf = (char *) malloc(255);
+    // str_replace("open open -- open", "open", "close", buf, true);
 
-    printf("%s\n", buf);
+    // printf("%s\n", buf);
+
+    // char* str = "I am aBox veryBox<(jhwj392989apdoism/k>nice boy";
+    // str_replace_special(str);
+
+    // char buf[] = "ABCDEFG";
+    // to_lower_case(buf);
+
+    // printf("%s\n", buf);
+
+    char str[] = "mike";
+
+    printf("%c\n", str[strlen(str) - 1]);
+
+    strip(str);
+    
+    printf("%s\n", str);
+
+}
+
+
+void clear_n_copy(char* dest, const char* source) {
+    memset(dest, 0x00, strlen(dest));
+    strcpy(dest, source);
 }
 
 char* json_dump_payload(struct Payload* p) 
@@ -450,6 +477,9 @@ void str_replace_special(char* str)
     char* buf;
     char *fl;
     char *space;
+    char* s3;
+    char* sp;
+    bool j;
 
     char start[] = "Box<(";
     s1 = str;
@@ -459,23 +489,98 @@ void str_replace_special(char* str)
     buf = (char*) malloc(255);
     space = (char*) malloc(255);
 
+    sp = (char*) malloc(255);
+    s3 = sp;
+
     fl = space;
+    j = false;
 
     while (*s1) {
         if (*s1 == *s2) {
-            *s1++; *s2++; i++;
-        }
+            // clear memory
+            memset(sp, 0, 255);
+            while (*s1 == *s2) {
+                *s3 = *s1;
+                s1++; s2++; i++; s3++; 
+            }
 
-        if (i == strlen(start)) {
-            i = 0;
-            // let s1 continue
-            while (*s1 != '>') 
-                s1++;
+
+            if (i == strlen(start)) {
+                i = 0;
+                // let s1 continue
+                while (*s1 != '>') 
+                    s1++;
+
+                // bring together
+                j = true;
+                memset(sp, 0, 255);
+                sprintf (sp, "%s%s", space, (s1 + 1));
+                break;
+            } else {
+                // update fl
+                s3 = sp;
+
+                while(*s3) {
+                    *fl = *s3;
+                    fl++; s3++;
+                }
+
+                i = 0;
+                s2 = start;
+            }
+
         }
 
         *fl = *s1;
         s1++; fl++;
     }
+
+    if (j)
+        printf("%s\n", sp);
+    else 
+        printf("%s\n", str);
+
+    free(buf);
+    free(space);
+    free(sp);
+}
+
+// convert string to lowercase
+void to_lower_case(char* str) {
+    char *s;
+    s = str;
+
+    while (*s) {
+        *s = tolower(*s);
+        s++;
+    }
+}
+
+void strip(char* str) {
+    char* s;
+    char* b;
+    char* buf;
+    char* s1;
+
+    s = str;
+    b = &str[strlen(str) - 1];
+
+    buf = (char*) malloc(strlen(str) + 1);
+    s1 = buf;
+
+    // skip leading whitespaces
+    while (isspace(*s)) s++;
+
+    // skip trailing whitespaces
+    while (isspace(*b)) b--;
+
+    while (*s && s != (b + 1)) {
+        *s1 = *s;
+        s++; s1++;
+    }
+
+    clear_n_copy(str, buf);
+    free(buf);
 }
 
 

@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include "runtime-configuration.h"
 #include "../main/utility.h"
 
@@ -15,47 +16,17 @@
 void init(int config_id, int ss58_format, bool only_primitives_on_init) 
 {
     _Self.config_id = config_id;
-    _Self.type_registry = (struct Types*) malloc(sizeof(__Ty));
-    _Self.intitial_state = false;
+    _Self.type_registry = (struct Type_Reg*) malloc(sizeof(__Ty));
+    _Self.initial_state = false;
 
     _Self.only_primitives_on_init = only_primitives_on_init;
     _Self.ss58_format = ss58_format;
 }
 
-// @classmethod
-//     def convert_type_string(cls, name):
+void convert_type_string(char* name) 
+{        
+    char **types = { "vec<u8>", "&[u8]", "& 'static[u8]" };
 
-//         name = re.sub(r'T::', "", name)
-//         name = re.sub(r'^T::', "", name, flags=re.IGNORECASE)
-//         name = re.sub(r'<T>', "", name, flags=re.IGNORECASE)
-//         name = re.sub(r'<T as Trait>::', "", name, flags=re.IGNORECASE)
-//         name = re.sub(r'<T as Trait<I>>::', "", name, flags=re.IGNORECASE)
-//         name = re.sub(r'<T as Config>::', "", name, flags=re.IGNORECASE)
-//         name = re.sub(r'<T as Config<I>>::', "", name, flags=re.IGNORECASE)
-//         name = re.sub(r'\n', "", name)
-//         name = re.sub(r'^(grandpa|session|slashing|limits|beefy_primitives|xcm::opaque)::', "", name)
-//         name = re.sub(r'VecDeque<', "Vec<", name, flags=re.IGNORECASE)
-//         name = re.sub(r'^Box<(.+)>$', r'\1', name, flags=re.IGNORECASE)
-
-//         if name == '()':
-//             return "Null"
-//         if name.lower() in ['vec<u8>', '&[u8]', "& 'static[u8]"]:
-//             return "Bytes"
-//         if name.lower() == '<lookup as staticlookup>::source':
-//             return 'LookupSource'
-//         if name.lower() == '<balance as hascompact>::type':
-//             return 'Compact<Balance>'
-//         if name.lower() == '<blocknumber as hascompact>::type':
-//             return 'Compact<BlockNumber>'
-//         if name.lower() == '<moment as hascompact>::type':
-//             return 'Compact<Moment>'
-//         if name.lower() == '<inherentofflinereport as inherentofflinereport>::inherent':
-//             return 'InherentOfflineReport'
-
-//         return name
-
-char* convert_type_string(char* name) 
-{
     str_replace(name, "T::", "", name, false);
     str_replace(name, "T::", "", name, true);
     str_replace(name, "<T>", "", name, false);
@@ -75,11 +46,50 @@ char* convert_type_string(char* name)
     // -------------------------------
 
     str_replace(name, "VecDeque<", "Vec<", name, false);
-    str_replace_special(name, false);  // special case
+    str_replace_special(name);  // special case
+
+    // name to lowercase
+    to_lower_case(name);
 
     if (!strcmp(name, "()")) 
-        return "Null";
-    if (str)
+        clear_n_copy(name, "Null");
+    else if (in_array(types, name))
+        clear_n_copy(name, "Bytes");
+    else if (!strcmp(name, "<lookup as staticlookup>::source"))
+        clear_n_copy(name, "LookupSource");
+    else if (!strcmp(name, "<balance as hascompact>::type"))
+        clear_n_copy(name, "Compact<Balance>");
+    else if (!strcmp(name, "<blocknumber as hascompact>::type"))
+        clear_n_copy(name, "Compact<BlockNumber>");
+    else if (!strcmp(name, "<moment as hascompact>::type"))
+        clear_n_copy(name, "Compact<Moment>");
+    else if (!strcmp(name, "<inherentofflinereport as inherentofflinereport>::inherent"))
+        clear_n_copy(name, "InherentOfflineReport");
 
+}
+
+void get_decoder_class(char* buf, char* type_str, const char* spec_version_id)
+{
+    char* decoder_class;
+    char* ts_lower; // type_str to lower case
+
+    decoder_class = alloc_mem(buf);
+    ts_lower = alloc_mem(type_str);
+
+    to_lower_case(ts_lower);
+
+    strip(type_str);
+    if (!strcmp(type_str, ""))
+        return;
+
+    convert_type_string(type_str);
+
+    strcpy(decoder_class, get_type(_Self.type_registry, ts_lower));
+
+    if (decoder_class != NULL) {
+        if (type_str[strlen(type_str) - 1] == '>') {
+            
+        }
+    }
     
 }
