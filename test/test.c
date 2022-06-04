@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 struct Payload {
     double jsonrpc;
@@ -33,7 +34,7 @@ char* json_dump_payload(struct Payload* p);
 char* slice(const char* str, char* result, size_t start, size_t end);
 void parse_json_string(char* buf);
 void parse_system_props(struct Props* p, char* buf);
-void str_replace(const char* str, const char* old, const char* new, char* buf);
+void str_replace(const char* str, const char* old, const char* new, char* buf, bool once);
 
 char buffer[1024];
 char buf [1024];
@@ -78,7 +79,7 @@ int main(void) {
     // printf("The token decimal is %d\n", p->tokenDecimals);
     // printf("The token symbol is %s\n", p->tokenSymbol);
     char* buf = (char *) malloc(255);
-    str_replace("close --", "open", "close", buf);
+    str_replace("open open -- open", "open", "close", buf, true);
 
     printf("%s\n", buf);
 }
@@ -311,8 +312,8 @@ void parse_system_props(struct Props* p, char* buf)
     free(buf3);
 }
 
-void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf) {
-
+void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf, bool once)
+{
     // https://codereview.stackexchange.com/questions/236212/find-and-replace-a-string-in-c-c-without-using-standard-library
 
     enum SIZE
@@ -336,17 +337,15 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
             char* match_iter = current;
             char* find_iter = find;
             int match = 0;
-            while(*match_iter!='\0' && *find_iter!='\0')
+            while (*match_iter != '\0' && *find_iter != '\0')
             {
                 if (*match_iter == *find_iter)
-                {
                     match = 1;
-                }
-                else
-                {
+                else {
                     match = 0;
                     break;
                 }
+
                 match_iter++;
                 find_iter++;
             }
@@ -425,17 +424,15 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
                     }
                     *temp_current = '\0';
                 }
-                else if (*find_iter == '\0' &&
-                         *replace_iter == '\0')
-                {
-                    // printf("replace and match are same length\n");
-                }
+                // else if (*find_iter == '\0' &&
+                //          *replace_iter == '\0')
+                // {
+                //     // printf("replace and match are same length\n");
+                // }
 
             }
-            else
-            {
-                // printf("only a fraction matched\n");
-            }
+
+            if (once) break;
         }
 
         ++current;
@@ -443,6 +440,42 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
 
     // printf("The sentence after replacement: %s\n", original);
     strcpy(rbuf, original);
+}
+
+void str_replace_special(char* str)
+{
+    char* s1;
+    char* s2;
+    int i;
+    char* buf;
+    char *fl;
+    char *space;
+
+    char start[] = "Box<(";
+    s1 = str;
+    s2 = start;
+
+    i = 0;
+    buf = (char*) malloc(255);
+    space = (char*) malloc(255);
+
+    fl = space;
+
+    while (*s1) {
+        if (*s1 == *s2) {
+            *s1++; *s2++; i++;
+        }
+
+        if (i == strlen(start)) {
+            i = 0;
+            // let s1 continue
+            while (*s1 != '>') 
+                s1++;
+        }
+
+        *fl = *s1;
+        s1++; fl++;
+    }
 }
 
 

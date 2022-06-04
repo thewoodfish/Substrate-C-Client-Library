@@ -56,24 +56,26 @@ void init(int config_id, int ss58_format, bool only_primitives_on_init)
 
 char* convert_type_string(char* name) 
 {
-    str_replace(name, "T::", "", name);
-    str_replace(name, "<T>", "", name);
-    str_replace(name, "<T as Trait>::", "", name);
-    str_replace(name, "<T as Trait<I>>::", "", name);
-    str_replace(name, "<T as Config>::", "", name);
-    str_replace(name, "<T as Config<I>>::", "", name);
+    str_replace(name, "T::", "", name, false);
+    str_replace(name, "T::", "", name, true);
+    str_replace(name, "<T>", "", name, false);
+    str_replace(name, "<T as Trait>::", "", name, false);
+    str_replace(name, "<T as Trait<I>>::", "", name, false);
+    str_replace(name, "<T as Config>::", "", name, false);
+    str_replace(name, "<T as Config<I>>::", "", name, false);
+    str_replace(name, "\n", "", name, false);
 
     // -------------------------------
-    str_replace(name, "grandpa::", "", name);
-    str_replace(name, "session::", "", name);
-    str_replace(name, "slashing::", "", name);
-    str_replace(name, "limits::", "", name);
-    str_replace(name, "beefy_primites::", "", name);
-    str_replace(name, "xcm::opaque::", "", name);
+    str_replace(name, "grandpa::", "", name, true);
+    str_replace(name, "session::", "", name, true);
+    str_replace(name, "slashing::", "", name, true);
+    str_replace(name, "limits::", "", name, true);
+    str_replace(name, "beefy_primites::", "", name, true);
+    str_replace(name, "xcm::opaque::", "", name, true);
     // -------------------------------
 
-    str_replace(name, "VecDeque<', \"Vec<", "", name);
-    str_replace(name, "T::", "", name);  // special case
+    str_replace(name, "VecDeque<", "Vec<", name, false);
+    str_replace_special(name, false);  // special case
 
     if (!strcmp(name, "()")) 
         return "Null";

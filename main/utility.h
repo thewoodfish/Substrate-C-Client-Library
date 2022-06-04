@@ -71,7 +71,7 @@ extern void append_rpc_message(struct Req_queue* req);
 extern void remove_rpc_message(struct Req_queue* req);
 extern void parse_system_props(struct Props* p, char* buf);
 static bool in_array(char** array, char* str);
-extern void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf);
+extern void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf, bool once);
 
 
 

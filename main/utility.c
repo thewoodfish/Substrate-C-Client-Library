@@ -416,7 +416,8 @@ void parse_system_props(struct Props* p, char* buf)
     free(buf3);
 }
 
-void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf) {
+void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf, bool once) 
+{
     // https://codereview.stackexchange.com/questions/236212/find-and-replace-a-string-in-c-c-without-using-standard-library
 
     enum SIZE
@@ -440,17 +441,15 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
             char* match_iter = current;
             char* find_iter = find;
             int match = 0;
-            while(*match_iter!='\0' && *find_iter!='\0')
+            while (*match_iter!='\0' && *find_iter!='\0')
             {
                 if (*match_iter == *find_iter)
-                {
                     match = 1;
-                }
-                else
-                {
+                else {
                     match = 0;
                     break;
                 }
+
                 match_iter++;
                 find_iter++;
             }
@@ -460,9 +459,9 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
                 // printf("the whole word matched\n");
                 find_iter = find;
                 char* replace_iter = replace;
-                while(*find_iter != '\0' &&
+                while (*find_iter != '\0' &&
                       *current != '\0' &&
-                      *replace_iter != '\0')
+                      *replace_iter != '\0' )
                 {
                     *current = *replace_iter;
                     ++find_iter;
@@ -529,17 +528,16 @@ void str_replace(const char* str_x, const char* old_x, const char* new, char* rb
                     }
                     *temp_current = '\0';
                 }
-                else if (*find_iter == '\0' &&
-                         *replace_iter == '\0')
-                {
-                    // printf("replace and match are same length\n");
-                }
+                // else if (*find_iter == '\0' &&
+                //          *replace_iter == '\0')
+                // {
+                //     // printf("replace and match are same length\n");
+                // }
 
             }
-            else
-            {
-                // printf("only a fraction matched\n");
-            }
+
+            // only replace first occurrence
+            if (once) break;
         }
 
         ++current;
