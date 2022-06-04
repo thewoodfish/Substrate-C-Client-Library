@@ -78,9 +78,9 @@ int main(void) {
     // printf("The token decimal is %d\n", p->tokenDecimals);
     // printf("The token symbol is %s\n", p->tokenSymbol);
     char* buf = (char *) malloc(255);
-    str_replace("Samaritan operating system", "operating", "flower", buf);
+    str_replace("close --", "open", "close", buf);
 
-
+    printf("%s\n", buf);
 }
 
 char* json_dump_payload(struct Payload* p) 
@@ -312,60 +312,137 @@ void parse_system_props(struct Props* p, char* buf)
 }
 
 void str_replace(const char* str_x, const char* old_x, const char* new, char* rbuf) {
-    int c, n; 
-    char* s1;
-    char* str;
-    char *s2;
-    char* old;
-    char* esp; // pointer of some sort 
-    char* rb;
-    char* s3;
-    char* buf;
-    int j;
 
-    buf = (char*) malloc(strlen(rbuf) + 1);
-    strcpy(buf, rbuf);
+    // https://codereview.stackexchange.com/questions/236212/find-and-replace-a-string-in-c-c-without-using-standard-library
 
-    rb = buf;
+    enum SIZE
+    {
+        ARRAY_MAX = 50
+    };
 
-    str = (char*) malloc(strlen(str_x) + 1);
-    strcpy(str, str_x);
+    char original[ARRAY_MAX];
+    char find[ARRAY_MAX];
+    char replace[ARRAY_MAX];
 
-    s1 = str;
+    strcpy(original, str_x);
+    strcpy(find, old_x);
+    strcpy(replace, new);
 
-    old = (char*) malloc(strlen(old_x) + 1);
-    strcpy(old, old_x);
-
-    s2 = old;
-
-    c = j = 0;
-
-    while (*s1) {
-        if (*s1 == *s2) {
-            esp = s1;
-            while (*s1 == *s2) {
-                s1++; s2++; c++;
+    char* current = original;
+    while (*current != '\0')
+    {
+        if (*current == find[0])
+        {
+            char* match_iter = current;
+            char* find_iter = find;
+            int match = 0;
+            while(*match_iter!='\0' && *find_iter!='\0')
+            {
+                if (*match_iter == *find_iter)
+                {
+                    match = 1;
+                }
+                else
+                {
+                    match = 0;
+                    break;
+                }
+                match_iter++;
+                find_iter++;
             }
 
-            // compare and replace if need be
-            if (c = strlen(str)) {
-                // copy into buffer
-                s3 = str;
+            if (match)
+            {
+                // printf("the whole word matched\n");
+                find_iter = find;
+                char* replace_iter = replace;
+                while(*find_iter != '\0' &&
+                      *current != '\0' &&
+                      *replace_iter != '\0')
+                {
+                    *current = *replace_iter;
+                    ++find_iter;
+                    ++replace_iter;
+                    ++current;
+                }
+                if (*find_iter != '\0' &&
+                    *replace_iter == '\0')
+                {
+                    // printf("match is longer than replace\n");
 
-                printf("%d", j);
+                    char* move_left = current;
+                    while(*find_iter != '\0' &&
+                          *move_left != '\0')
+                    {
+                        ++find_iter;
+                        ++move_left;
+                    }
 
-                sprintf(rbuf, "%s%s%s", buf, new, s1);
-                // break;
+                    char* temp_current = current;
+                    while(*move_left != '\0' &&
+                          *temp_current != '\0')
+                    {
+                        *temp_current = *move_left;
+                        ++temp_current;
+                        ++move_left;
+                    }
+
+                    *temp_current = '\0';
+                }
+                else if (*find_iter == '\0' &&
+                         *replace_iter != '\0')
+                {
+                    // printf("replace is longer than match\n");
+                    char* move_right = current;
+                    char temp[ARRAY_MAX];
+                    char* temp_iter = temp;
+                    while(*replace_iter != '\0')
+                    {
+                        *temp_iter = *current;
+                        *current = *replace_iter;
+                        ++current;
+                        ++temp_iter;
+                        ++replace_iter;
+                    }
+
+                    char* current_to_end = current;
+                    while(*current_to_end != '\0')
+                    {
+                        *temp_iter = *current_to_end;
+                        ++temp_iter;
+                        ++current_to_end;
+                    }
+
+                    *temp_iter = '\0';
+
+                    temp_iter = temp;
+                    char* temp_current = current;
+                    while(*temp_iter != '\0')
+                    {
+                        *temp_current = *temp_iter;
+                        ++temp_current;
+                        ++temp_iter;
+                    }
+                    *temp_current = '\0';
+                }
+                else if (*find_iter == '\0' &&
+                         *replace_iter == '\0')
+                {
+                    // printf("replace and match are same length\n");
+                }
+
+            }
+            else
+            {
+                // printf("only a fraction matched\n");
             }
         }
-        *rb = *s1;
-        s1++; rb++;
+
+        ++current;
     }
 
-    printf("Output: %s\n", rbuf);
-
-    free(str);
-    free(old);
+    // printf("The sentence after replacement: %s\n", original);
+    strcpy(rbuf, original);
 }
 
 
