@@ -7,7 +7,9 @@
  */
 
 #include <stdbool.h>
+#include <string.h>
 #include "runtime-configuration.h"
+#include "../main/utility.h"
 
 
 void init(int config_id, int ss58_format, bool only_primitives_on_init) 
@@ -52,4 +54,30 @@ void init(int config_id, int ss58_format, bool only_primitives_on_init)
 
 //         return name
 
-char* convert_type_string()
+char* convert_type_string(char* name) 
+{
+    str_replace(name, "T::", "", name);
+    str_replace(name, "<T>", "", name);
+    str_replace(name, "<T as Trait>::", "", name);
+    str_replace(name, "<T as Trait<I>>::", "", name);
+    str_replace(name, "<T as Config>::", "", name);
+    str_replace(name, "<T as Config<I>>::", "", name);
+
+    // -------------------------------
+    str_replace(name, "grandpa::", "", name);
+    str_replace(name, "session::", "", name);
+    str_replace(name, "slashing::", "", name);
+    str_replace(name, "limits::", "", name);
+    str_replace(name, "beefy_primites::", "", name);
+    str_replace(name, "xcm::opaque::", "", name);
+    // -------------------------------
+
+    str_replace(name, "VecDeque<', \"Vec<", "", name);
+    str_replace(name, "T::", "", name);  // special case
+
+    if (!strcmp(name, "()")) 
+        return "Null";
+    if (str)
+
+    
+}
