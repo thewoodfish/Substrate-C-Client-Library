@@ -75,7 +75,7 @@ extern void str_replace(const char* str_x, const char* old_x, const char* new, c
 extern void str_replace_special(char* str);
 extern void to_lower_case(char* str);
 extern void strip(char* str);
-extern char* get_type(struct Type_Reg* self, char* str);
+// extern char* get_type(struct Type_Reg* self, char* str);
 
 
 

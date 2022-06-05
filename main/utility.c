@@ -13,14 +13,11 @@
 #include <arpa/inet.h>
 #include "utility.h"
 #include "substrate_interface.h"
-#include "../scale-codec/runtime-configuration.h"
 
 
 // global buffer - 4KB
 char space[4096];
-char* buffer;
-
-buffer = space;
+char* buffer = space;
 
 // message flag { 1 to indicate a message has dropped into buffer }
 int flag = 0;
@@ -666,19 +663,19 @@ void strip(char* str) {
     free(buf);
 }
 
-char* get_type(struct Type_Reg* self, char* str) 
-{
-    struct Types *ty, *curr;
+// char* get_type(struct Type_Reg* self, char* str) 
+// {
+//     struct Types *ty, *curr;
 
-    if (self->types) {
-        ty = self->types;
-        while (ty) {
-            if (!strcmp(ty->name, str))
-                return ty->val;
+//     if (self->types) {
+//         ty = self->types;
+//         while (ty) {
+//             if (!strcmp(ty->name, str))
+//                 return ty->val;
 
-            ty = ty->next;
-        }
-    }
+//             ty = ty->next;
+//         }
+//     }
 
-    return NULL;
-}
+//     return NULL;
+// }
