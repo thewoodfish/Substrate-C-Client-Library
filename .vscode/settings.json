@@ -7,6 +7,7 @@
         "network.h": "c",
         "wsclient.h": "c",
         "substrate_interface.h": "c",
-        "ssl.h": "c"
+        "ssl.h": "c",
+        "scale.h": "c"
     }
 }

@@ -39,6 +39,8 @@ static struct Substrate {
     struct Config* config;
     int session;
 
+    struct Block* block;
+
 } Self ;
 
 
@@ -63,8 +65,8 @@ extern int sc_ss58_format();
 extern int set_ss58_format(int val);
 extern char* sc_get_chain_head();
 extern char* sc_get_chain_finalised_head();
-extern char* sc_get_block_hash(int block_i);
-extern char* sc_get_chain_block(const char* block_hash, int block_id, struct Metadata_Decoder* md);
+extern char* sc_get_block_hash(const char* block_id);
+extern struct Block* sc_get_chain_block(const char* block_hash, const char* block_id, struct Metadata_Decoder* md);
 static void add_param(char** param, char* buf);
 
 

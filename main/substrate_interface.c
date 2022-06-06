@@ -221,8 +221,10 @@ static char* rpc_request(char* method, char** params, void* result_handler)
 
         }
 
-        return json_body;
     }
+
+    return json_body;
+
 }
 
 /**
@@ -361,14 +363,15 @@ char* sc_get_chain_finalised_head() {
     return rpc_request("chain_getFinalisedHead", param, NULL);
 }
 
-char* sc_get_block_hash(int block_id) {
+char* sc_get_block_hash(const char* block_id) {
+    // make sure 'block_id' is a hexadecimal string
     char* buf;
     char* param[2];
     char* result;
 
     buf = (char*) malloc(10);
 
-    sprintf(buf, "%d", block_id);
+    sprintf(buf, "%s", block_id);
     add_param(param, buf);
 
     result = rpc_request("chain_getBlockHash", param, NULL);
@@ -382,7 +385,7 @@ static void add_param(char** param, char* buf) {
     param[1] = NULL;
 }
 
-char* sc_get_chain_block(const char* block_hash, int block_id, struct Metadata_Decoder* md) 
+struct Block* sc_get_chain_block(const char* block_hash, const char* block_id, struct Metadata_Decoder* md) 
 {
     char* param[2];
     char* buf;
@@ -395,12 +398,10 @@ char* sc_get_chain_block(const char* block_hash, int block_id, struct Metadata_D
     buf = rpc_request("chain_getBlock", param, NULL);
 
     // if error or is_empty
-    if (!strcmp(buf, "empty") || strstr(buf, "Error")) {
-        clear_n_copy(buf, "0");
-        return buf;
+    if (!buf || !strcmp(buf, "empty") || strstr(buf, "Error")) {
+        return NULL;
     } else {
-
-        // Extend extrinsics with mock_extrinsics for e.g. performance test
-        // ----
+        // save block data to client
+        return parse_and_cache_block(buf);
     }
 }

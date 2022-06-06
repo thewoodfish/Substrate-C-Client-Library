@@ -39,6 +39,8 @@ void str_replace_special(char* str);
 void to_lower_case(char* str);
 void clear_n_copy(char* dest, const char* source);
 void strip(char* str);
+struct Block* parse_and_cache_block(char* buf);
+
 
 char buffer[1024];
 char buf [1024];
@@ -95,13 +97,16 @@ int main(void) {
 
     // printf("%s\n", buf);
 
-    char str[] = "mike";
+    // char str[] = "mike";
 
-    printf("%c\n", str[strlen(str) - 1]);
+    // printf("%c\n", str[strlen(str) - 1]);
 
-    strip(str);
+    // strip(str);
     
-    printf("%s\n", str);
+    // printf("%s\n", str);
+    char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"block\":{\"header\":{\"parentHash\":\"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066\",\"number\":\"0x4\",\"stateRoot\":\"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01\",\"extrinsicsRoot\":\"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb\",\"digest\":{\"logs\":[\"0x066175726120e9846f1000000000\",\"0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85\"]}},\"extrinsics\":[\"0x280402000bf014bb358101\"]},\"justifications\":null},\"id\":\"2\"}";
+    
+    parse_json_string(buf);
 
 }
 
@@ -151,6 +156,12 @@ void parse_json_string(char* buf) {
     // extract result, id and version
     i = count = j = 0;
 
+    // parse string for function (get_blockHash())
+    if (strstr(buf, "\"digest\":{\"logs\"") && !strstr(buf, "error")) {
+
+    }
+
+    // parse string in case of errors
     if (!strstr(buf, "error")) {
         while (*str) {
             if (*str == ':') {
@@ -583,5 +594,40 @@ void strip(char* str) {
     free(buf);
 }
 
+struct Block* parse_and_cache_block(char* buf) 
+{
+    // "block":{"header":{"parentHash":"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066","number":"0x4",
+    // "stateRoot":"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01","extrinsicsRoot"
+    // :"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb","digest":{"logs":["0x066175726120e9846f1000000000",
+    // "0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85"]
 
+    // {"jsonrpc":"2.0","result":{"block":{"header":{"parentHash":"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066","number":"0x4",
+    // "stateRoot":"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01","extrinsicsRoot":
+    // "0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb","digest":{"logs":["0x066175726120e9846f1000000000",
+    // "0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85"]}},
+    // "extrinsics":["0x280402000bf014bb358101"]},"justifications":null},"id":"2"}
 
+    char* str;
+    char* parent_hash;
+    char* number;
+    char* state_root;
+    char* extrinsics_root;
+
+    // logs shouldn't be more than 10, hopefully
+    char* logs[10];
+    int n;
+
+    str = buf;
+    n = 0;
+
+    while (*str) {
+        if (*str == ':') {
+            if (!n) {
+                
+            }
+
+            n++;
+        }
+    }
+
+}

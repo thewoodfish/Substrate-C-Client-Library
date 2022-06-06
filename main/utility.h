@@ -59,6 +59,16 @@ struct Payload {
     
 } _____PL;
 
+// data of block loaded
+struct Block {
+    int block_number;
+    char* parant_hash;
+    char* state_root;
+    char* extrinsic_root;
+    char* extrinsics;
+    struct Logs* blok_log;
+} __Blovk;
+
 extern char* slice(const char* str, char* result, size_t start, size_t end);
 extern char* ip_to_url(char* url);
 extern void clear_n_copy(char* dest, const char* source);
@@ -75,7 +85,7 @@ extern void str_replace(const char* str_x, const char* old_x, const char* new, c
 extern void str_replace_special(char* str);
 extern void to_lower_case(char* str);
 extern void strip(char* str);
-// extern char* get_type(struct Type_Reg* self, char* str);
+extern struct Block* parse_and_cache_block(char* buf);
 
 
 

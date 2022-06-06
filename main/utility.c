@@ -679,3 +679,11 @@ void strip(char* str) {
 
 //     return NULL;
 // }
+
+struct Block* parse_and_cache_block(char* buf) 
+{
+    struct Block* bl;
+    bl = (struct Block*) malloc(sizeof(__Blovk));
+
+    return bl;
+}
