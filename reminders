@@ -15,3 +15,32 @@
 // FREE ALL MEMORY LOCATIONS
 // ALSO LOOK AT CONCURRENCY - MUTEX LOCKS
 // EXAMINE ALL RETURN VALUES FOR PUBLIC API
+
+// {
+//   "jsonrpc": "2.0",
+//   "result": {
+//     "block": {
+//       "header": {
+//         "parentHash": "0x093e348fc4283eaf02713638870a73d3d1541c6eb3da813fe954d11e60d28f23",
+//         "number": "0x23",
+//         "stateRoot": "0x927e4a469408a42f75e604d866617594c1e9d13db9f2c5200e56410fb93d3dab",
+//         "extrinsicsRoot": "0x0bcef9a452bdfcfa58871bb587eea4446b45094f6054051f6ffcd1a78725423d",
+//         "digest": {
+//           "logs": [
+//             "0x066175726120966c6f1000000000",
+//             "0x0561757261010166f5f35775fd423bd1c59435f88e0f4e4ba8114392c0a9b53869c4e1870f3f4d8a916b22edd34151322904ec37a48ebc7834cc95a4b6d846bc6f830f9a13218d"
+//           ]
+//         }
+//       },
+//       "extrinsics": [
+//         "0x280402000ba0fb80338101"
+//       ]
+//     },
+//     "justifications": null
+//   },
+//   "id": "2"
+// }
+
+// gcc test2.c ../cScale/src/scale.c ../cScale/src/type/boolean.c
+
+// gcc test2.c ../cScale/src/scale.c ../cScale/src/type/compact.c ../cScale/src/util/hex.c
