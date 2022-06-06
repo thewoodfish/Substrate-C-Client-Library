@@ -18,8 +18,8 @@ int main(void) {
     // initialize connection to node
 
     init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
-    // fprintf(stderr, "The chain head is %s\n", sc_get_chain_head()); 
-    sc_get_chain_block("", "0x4", NULL); 
+    fprintf(stderr, "The chain head is %s\n", sc_get_chain_head()); 
+    sc_get_chain_block("", "0x4"); 
     
 
     close_websocket();

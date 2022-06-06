@@ -25,6 +25,9 @@ void init_client(
         exit(1);
     }
 
+    // allocate global buffer
+    buffer = (char*) malloc(GLOBAL_BUFFER_SPACE);
+
     char* qbuf = (char*) malloc(10); // dummy buffer used for comparisons
 
     // runtime config 
@@ -235,6 +238,8 @@ static void free_all_mem() {
         remove_rpc_message(Self.rpc_message_queue);
         Self.rpc_message_queue = Self.rpc_message_queue->next;
     }
+
+    free(buffer);
 }
 
 char* sc_name() {
@@ -385,7 +390,7 @@ static void add_param(char** param, char* buf) {
     param[1] = NULL;
 }
 
-struct Block* sc_get_chain_block(const char* block_hash, const char* block_id, struct Metadata_Decoder* md) 
+struct Block* sc_get_chain_block(const char* block_hash, const char* block_id) 
 {
     char* param[2];
     char* buf;

@@ -1,5 +1,8 @@
 
+#define GLOBAL_BUFFER_SPACE 4096
 
+// length of cache (linked list)
+#define CACHE_LENGTH 10
 
 // extern variables
 extern char* buffer;
@@ -66,6 +69,7 @@ struct Block {
     char* state_root;
     char* extrinsic_root;
     char* extrinsics;
+    char* justifications;
     struct Logs* blok_log;
 } __Blovk;
 
@@ -86,6 +90,10 @@ extern void str_replace_special(char* str);
 extern void to_lower_case(char* str);
 extern void strip(char* str);
 extern struct Block* parse_and_cache_block(char* buf);
+static void parse_block_hash(struct Req_queue* rmq, char* buf);
+static void parse_rpc_error(struct Req_queue* rmq,char* buf);
+
+
 
 
 

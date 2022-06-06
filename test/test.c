@@ -40,6 +40,9 @@ void to_lower_case(char* str);
 void clear_n_copy(char* dest, const char* source);
 void strip(char* str);
 struct Block* parse_and_cache_block(char* buf);
+void parse_block_hash(char* buf);
+void parse_rpc_error(char* buf);
+
 
 
 char buffer[1024];
@@ -104,10 +107,10 @@ int main(void) {
     // strip(str);
     
     // printf("%s\n", str);
-    char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"block\":{\"header\":{\"parentHash\":\"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066\",\"number\":\"0x4\",\"stateRoot\":\"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01\",\"extrinsicsRoot\":\"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb\",\"digest\":{\"logs\":[\"0x066175726120e9846f1000000000\",\"0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85\"]}},\"extrinsics\":[\"0x280402000bf014bb358101\"]},\"justifications\":null},\"id\":\"2\"}";
+    char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"ss58Format\":0,\"tokenDecimals\":10,\"tokenSymbol\":\"DOT\"},\"id\":\"1\"}";
+    // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"block\":{\"header\":{\"parentHash\":\"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066\",\"number\":\"0x4\",\"stateRoot\":\"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01\",\"extrinsicsRoot\":\"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb\",\"digest\":{\"logs\":[\"0x066175726120e9846f1000000000\",\"0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85\"]}},\"extrinsics\":[\"0x280402000bf014bb358101\"]},\"justifications\":null},\"id\":\"2\"}";
     
     parse_json_string(buf);
-
 }
 
 
@@ -156,138 +159,129 @@ void parse_json_string(char* buf) {
     // extract result, id and version
     i = count = j = 0;
 
-    // parse string for function (get_blockHash())
-    if (strstr(buf, "\"digest\":{\"logs\"") && !strstr(buf, "error")) {
-
-    }
-
     // parse string in case of errors
-    if (!strstr(buf, "error")) {
-        while (*str) {
-            if (*str == ':') {
-                // parse "jsonrpc"
-                if (!i) {
-                    str += 2; // skip ':"'
-                    while (*str != '"') {
-                        *s1 = *str;
-                        str++; s1++;
-                    }
+    if (strstr(buf, "error"))
+        parse_rpc_error(buf);
+    else
+        // if its a block that was queried (get_blockHash)
+        parse_block_hash(buf);
+//     else {
+//         while (*str) {
+//             if (*str == ':') {
+//                 // parse "jsonrpc"
+//                 if (!i) {
+//                     str += 2; // skip ':"'
+//                     while (*str != '"') {
+//                         *s1 = *str;
+//                         str++; s1++;
+//                     }
 
-                } else if (i == 1) {
+//                 } else if (i == 1) {
+// mv = end;
 
-                        // keep base pointer
-                        usp = str;
-                        while (*str) {
-                            if (*str == '}') j++;
-                            str++;
-                        }
+//                 // start from the back and stop at the first bracket
+//                 mv--; str++;
+//                 while (*mv != '}') {
+//                     mv--;
+//                 }
 
-                        // return str back to right position
-                        str = usp;
+//                 // length of memory to allocate
+//                 count = mv - str;
 
-                        // if result is not a struct-like string
-                        if (j == 1) {
+//                 while (str != (mv + 1)) {
+//                     *s2 = *str;
 
-                            str += 2; // skip ':"'
-                            while (*str != '"') {
-                                count++;
-                                str++;
-                            }
+//                     // reduce colon counts too as we proceed
+//                     if (*str == ':') c--;
 
-                            if (count) {
-                                // return back to usp
-                                str = usp;
+//                     str++; s2++;                    
+//                 }
+                
+//                 } else {
+//                     str += 2; // skip ':"'
+//                     while (*str != '"') {
+//                         *s3 = *str;
+//                         str++; s3++;
+//                     }
+//                 }
 
-                                str += 2;
-                                while (*str != '"') {
-                                    *s2 = *str;
-                                    str++; s2++;
-                                }
-                            }
-                        } else {
-                            // parse struct like string
-                            str += 2; // skip ':{"'
+//                 i++;
+//             }
+//             str++;
+//         }
 
-                            while (*(str) != '}') {
-                                count++;
-                                str++;
-                            }
+//         // allocate space for result
+//         if (count) {
+//             rmq->result = (char*) malloc(count + 1);
+//             strcpy(rmq->result, space);
+//         } else {
+//             rmq->result = (char*) malloc(6);
+//             strcpy(rmq->result, "empty");
+//         }
 
-                            if (count) {
-                                // return back to usp
-                                str = usp;
+//         printf("%s\n", rmq->result);
+//         printf("%s\n", box);
 
-                                str += 2;
-                                while (*(str) != '}') {
-                                    *s2 = *str;
-                                    str++; s2++;
-                                }
-                            }
-                        }
-                } else {
-                    str += 2; // skip ':"'
-                    while (*str != '"') {
-                        *s3 = *str;
-                        str++; s3++;
-                    }
+//         rmq->error = 0;
+//         rmq->id = atoi(box);
+
+//     }
+}
+
+void parse_rpc_error(char* buf)
+{
+    // first allocate RMQ struct
+    struct Req_queue* rmq = malloc(sizeof(__RMQ));
+    
+    char* str = buf;
+    char* s1 = rmq->jsonrpc;
+
+    char* space = (char*) malloc(1024);
+    char* s2 = space;
+
+    char* box = (char*) malloc(10);
+    char* s3 = box;
+
+    // some sort of stack base pointer
+    char* usp;
+
+    int i, count, j;
+
+    // extract result, id and version
+    i = count = j = 0;
+    // parse rpc error
+    while (*str) {
+        if (*str == ':') {
+            // parse "jsonrpc"
+            if (!i) {
+                str += 2; // skip ':"'
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
                 }
-
-                i++;
-            }
-            str++;
-        }
-
-        // allocate space for result
-        if (count) {
-            rmq->result = (char*) malloc(count + 1);
-            strcpy(rmq->result, space);
-        } else {
-            rmq->result = (char*) malloc(6);
-            strcpy(rmq->result, "empty");
-        }
-
-        printf("%s\n", rmq->result);
-        printf("%s\n", box);
-
-        rmq->error = 0;
-        rmq->id = atoi(box);
-
-    } else {
-        // look for error code and string
-        while (*str) {
-            if (*str == ':') {
-                // parse "jsonrpc"
-                if (!i) {
-                    str += 2; // skip ':"'
-                    while (*str != '"') {
-                        *s1 = *str;
-                        str++; s1++;
-                    }
-                } else if (i == 2) {
-                    // parse error
-                    str += 2; // skip ':-'
-                    while (isdigit(*str)) {
-                        *s3 = *str;
-                        str++; s3++;
-                    }
-                } else if (i == 3) {
-                    str += 2; // skip ':-'
-                    while (isalpha(*str) || !ispunct(*str)) {
-                        *s2 = *str;
-                        str++; s2++;
-                    }
+            } else if (i == 2) {
+                // parse error
+                str += 2; // skip ':-'
+                while (isdigit(*str)) {
+                    *s3 = *str;
+                    str++; s3++;
                 }
-                i++;
+            } else if (i == 3) {
+                str += 2; // skip ':-'
+                while (isalpha(*str) || !ispunct(*str)) {
+                    *s2 = *str;
+                    str++; s2++;
+                }
             }
-            str++;
+            i++;
         }
-
-        rmq->result = (char*) malloc(strlen(space) + strlen(box) + 3);
-        rmq->error = 1;
-
-        sprintf(rmq->result, "%s: %s", box, space);
-
+        str++;
     }
+
+    rmq->result = (char*) malloc(strlen(space) + strlen(box) + 3);
+    rmq->error = 1;
+
+    sprintf(rmq->result, "%s: %s", box, space);
 
     free(rmq);
     free(space);
@@ -592,6 +586,111 @@ void strip(char* str) {
 
     clear_n_copy(str, buf);
     free(buf);
+}
+
+void parse_block_hash(char* buf) 
+{
+    // first allocate RMQ struct
+    struct Req_queue* rmq = malloc(sizeof(__RMQ));
+    char* mv;
+    
+    char* str = buf;
+    char* end = &buf[strlen(buf) - 1];
+    char* s1 = rmq->jsonrpc;
+    mv = end;
+
+    char* space = (char*) malloc(1024);
+    char* s2 = space;
+
+    char* box = (char*) malloc(10);
+    char* s3 = box;
+
+    int i, count, j, c, n;
+
+    // extract result, id and version
+    i = count = j = n = c = 0;
+
+    // count the number of colons in string
+    while (*str) {
+        if (*str == ':') 
+            c++;
+        str++;
+    }
+
+    // restore pointer
+    str = buf;
+
+    while (*str) {
+        if (*str == ':') {
+            // parse "jsonrpc"
+            if (!i) {
+                str += 2; // skip ':"'
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
+                }
+            
+            } else if (i == 1) {
+                mv = end;
+
+                // start from the back and stop at the first bracket
+                mv--; str++;
+                while (*mv != '}') {
+                    mv--;
+                }
+
+                // length of memory to allocate
+                count = mv - str;
+
+                while (str != (mv + 1)) {
+                    *s2 = *str;
+
+                    // reduce colon counts too as we proceed
+                    if (*str == ':') c--;
+
+                    str++; s2++;                    
+                }
+                
+            } else if (i == (c - 1)) {
+                // last colon, extract id
+
+                mv = end;
+                // move mv backwards at least 10 times backwards, that would have covered the id
+                n = 0;
+                while (n < 11) {
+                    mv--; n++;
+                }
+
+                // now mv can loop forward to extract the digits of the id
+                while (*mv) {
+                    while (isdigit(*mv))  {
+                        *s3 = *mv;
+                        mv++; s3++;
+                    }
+                    mv++;
+                }
+            }
+
+            i++;
+        }
+        str++;
+    }
+
+    // allocate space for result
+    if (count) {
+        rmq->result = (char*) malloc(count + 1);
+        strcpy(rmq->result, space);
+    } else {
+        rmq->result = (char*) malloc(6);
+        strcpy(rmq->result, "empty");
+    }
+
+    printf("%s\n\n", rmq->result);
+    printf("%s\n", box);
+
+    rmq->error = 0;
+    rmq->id = atoi(box);
+
 }
 
 struct Block* parse_and_cache_block(char* buf) 
