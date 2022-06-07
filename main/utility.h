@@ -1,5 +1,6 @@
 
 #define GLOBAL_BUFFER_SPACE 4096
+#define LOG_MEMORY_LENGTH 512
 
 // length of cache (linked list)
 #define CACHE_LENGTH 10
@@ -9,13 +10,30 @@ extern char* buffer;
 extern int flag;
 extern struct Dh _d_andler;
 extern struct Config _c_def;
+extern struct Ws_option __WS_opt;
+extern struct Props __Pr;
+extern struct Dh _d_andler;
+extern struct Config _c_def;
+extern struct Ws_option __WS_opt;
+extern struct Props __Pr;
+extern struct Runtime_Config __R_con;
+extern struct Metadata_Decoder __Met_data;
+extern struct Req_queue __RMQ;
+extern struct Payload _____PL;
+extern struct Block __Blovk;
+extern struct Runtime_Config __R_con;
+extern struct Metadata_Decoder __Met_data;
+extern struct Req_queue __RMQ;
+extern struct Payload _____PL;
+extern struct Block __Blovk;
+extern struct Block_log __Logz;
 
 // Websocket connection options
 struct Ws_option {
     long max_size;
     long read_limit;
     long write_limit;
-};
+} __WS_opt;
 
 // chain properties
 struct Props {
@@ -70,8 +88,15 @@ struct Block {
     char* extrinsic_root;
     char* extrinsics;
     char* justifications;
-    struct Logs* blok_log;
+    struct Block_log* blok_log;
+    struct Block* next;
 } __Blovk;
+
+struct Block_log {
+    int block_no;
+    int logs_count;
+    char** logs;
+} __Logz;
 
 extern char* slice(const char* str, char* result, size_t start, size_t end);
 extern char* ip_to_url(char* url);
@@ -92,6 +117,12 @@ extern void strip(char* str);
 extern struct Block* parse_and_cache_block(char* buf);
 static void parse_block_hash(struct Req_queue* rmq, char* buf);
 static void parse_rpc_error(struct Req_queue* rmq,char* buf);
+extern struct Block* parse_and_cache_block(char* buf);
+static void append_block(struct Block* new);
+static void remove_block(struct Block* blovk);
+
+
+
 
 
 
