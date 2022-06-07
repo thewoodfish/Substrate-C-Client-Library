@@ -4,7 +4,7 @@
  * File: main.c
  * Desc: Entry point for the substrate client
  * Date: May 32 13:05
- * Licence: MIT
+ * Licence: 
 */
 
 #include <stdio.h>
