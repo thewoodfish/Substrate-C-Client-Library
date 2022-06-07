@@ -7,6 +7,7 @@
 
 // extern variables
 extern char* buffer;
+extern char* chain_method;
 extern int flag;
 extern struct Dh _d_andler;
 extern struct Config _c_def;
@@ -114,10 +115,9 @@ extern void str_replace(const char* str_x, const char* old_x, const char* new, c
 extern void str_replace_special(char* str);
 extern void to_lower_case(char* str);
 extern void strip(char* str);
-extern struct Block* parse_and_cache_block(char* buf);
+extern struct Block* parse_and_cache_block(char* buf, const char* method);
 static void parse_block_hash(struct Req_queue* rmq, char* buf);
 static void parse_rpc_error(struct Req_queue* rmq,char* buf);
-extern struct Block* parse_and_cache_block(char* buf);
 static void append_block(struct Block* new);
 static void remove_block(struct Block* blovk);
 

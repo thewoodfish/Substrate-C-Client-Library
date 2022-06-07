@@ -68,6 +68,10 @@ extern char* sc_get_chain_finalised_head();
 extern char* sc_get_block_hash(const char* block_id);
 extern struct Block* sc_get_chain_block(const char* block_hash, const char* block_id);
 static void add_param(char** param, char* buf);
+extern int sc_get_block_number(const char* block_hash);
+extern void sc_get_metadata(const char* block_hash);
+
+
 
 
 

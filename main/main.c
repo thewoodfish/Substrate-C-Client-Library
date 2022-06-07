@@ -22,8 +22,8 @@ int main(void) {
     init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
     // fprintf(stderr, "The chain head is %s\n", sc_get_chain_head()); 
 
-    bl = sc_get_chain_block("", "0xa");
-    fprintf(stderr, "The extrinsic for block %d is %s\n", bl->block_number, bl->extrinsics); 
+    bl = sc_get_chain_block("", "0x384");
+    sc_get_metadata(bl->parant_hash);
     
 
     close_websocket();

@@ -16,6 +16,7 @@
 // ALSO LOOK AT CONCURRENCY - MUTEX LOCKS
 // EXAMINE ALL RETURN VALUES FOR PUBLIC API
 // deal well with linkage and extern
+// chain_getHeader, pass wrong hash
 
 // {
 //   "jsonrpc": "2.0",

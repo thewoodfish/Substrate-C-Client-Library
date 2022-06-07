@@ -27,6 +27,7 @@ void init_client(
 
     // allocate global buffer
     buffer = (char*) malloc(GLOBAL_BUFFER_SPACE);
+    chain_method = (char*) malloc(30);
 
     char* qbuf = (char*) malloc(10); // dummy buffer used for comparisons
 
@@ -240,6 +241,7 @@ static void free_all_mem() {
     }
 
     free(buffer);
+    free(chain_method);
 }
 
 char* sc_name() {
@@ -394,10 +396,52 @@ struct Block* sc_get_chain_block(const char* block_hash, const char* block_id)
     buf = rpc_request("chain_getBlock", param, NULL);
 
     // if error or is_empty
-    if (!buf || !strcmp(buf, "empty") || strstr(buf, "Error")) {
+    if (!buf || !strcmp(buf, "empty") || !strcmp(buf, "null") || strstr(buf, "Error")) {
         return NULL;
     } else {
         // save block data to client
-        return parse_and_cache_block(buf);
+        return parse_and_cache_block(buf, "getBlock");
     }
+}
+
+int sc_get_block_number(const char* block_hash) 
+{
+    char* buf;
+    char* param[2];
+    int block_no;
+    struct Block* bl;
+
+    block_no = 0;
+    add_param(param, (char*) block_hash);
+    buf = rpc_request("chain_getHeader", param, NULL);
+
+    // if error or is_empty
+    if (!buf || !strcmp(buf, "empty") || !strcmp(buf, "null") || strstr(buf, "Error")) ;
+    else {
+        // save block data to client
+        bl = parse_and_cache_block(buf, "getHeader");
+        block_no = bl->block_number;
+
+        // free block, we're not appending to cache
+        free(bl);
+    }
+
+    return block_no;
+}
+
+void sc_get_metadata(const char* block_hash) 
+{
+    char* param[2] = { NULL, NULL };
+    char* buf;
+
+    // set global variable to indicate that it's metadata that we're getting
+    // because its soo large unlike other data bytes array
+    strcpy(chain_method, "state_getMetadata");
+
+    if (block_hash)
+        add_param(param, (char*) block_hash);
+
+    buf = rpc_request("state_getMetadata", param, NULL);
+
+    fprintf(stderr, "%s\n", buf);
 }

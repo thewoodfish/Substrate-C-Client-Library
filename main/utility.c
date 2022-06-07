@@ -18,6 +18,9 @@
 // global buffer - 4KB
 char* buffer;
 
+// for chain methods
+char* chain_method;
+
 // message flag { 1 to indicate a message has dropped into buffer }
 int flag = 0;
 
@@ -86,7 +89,7 @@ static bool in_array(char** array, char* str) {
 char* json_dump_payload(struct Payload* p) 
 {
     int j, count = 0;
-    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", NULL };
+    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", "chain_getHeader", "state_getMetadata", NULL };
 
     char* dummy = (char*) malloc(1024);
     char* buf = (char*) malloc(1024);
@@ -561,7 +564,7 @@ static void parse_rpc_error(struct Req_queue* rmq,char* buf)
                 }
             } else if (i == 3) {
                 str += 2; // skip ':-'
-                while (isalpha(*str) || !ispunct(*str)) {
+                while (*str != '"') {
                     *s2 = *str;
                     str++; s2++;
                 }
@@ -574,7 +577,7 @@ static void parse_rpc_error(struct Req_queue* rmq,char* buf)
     rmq->result = (char*) malloc(strlen(space) + strlen(box) + 3);
     rmq->err_flag = 1;
 
-    sprintf(rmq->result, "%s: %s", box, space);
+    sprintf(rmq->result, "%d: %s", atoi(box), space);
 
     free(space);
     free(box);
@@ -585,11 +588,17 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
     char* mv;
     char* str = buf;
     char* end = &buf[strlen(buf) - 1];
-
+    int bytes;
     char* s1 = rmq->jsonrpc;
     mv = end;
 
-    char* space = (char*) malloc(3072);
+    // metadata requires a lot of space
+    if (!strcmp(chain_method, "state_getMetadata"))
+        bytes = 70410;
+    else    
+        bytes = 3072;
+    
+    char* space = (char*) malloc(bytes);
     char* s2 = space;
 
     char* box = (char*) malloc(10);
@@ -618,7 +627,7 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
 
     while (*str) {
         if (*str == ':') {
-            // parse "jsonrpc"
+            // parse "jsonrpc"clea
             if (!i) {
                 str += 2; // skip ':"'
                 while (*str != '"') {
@@ -627,13 +636,17 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
                 }
             } else if (i == 1) {
                 // skip first char
-                str++;
+
+                if (*(str + 1) != 'n')
+                    str += 2;
+                else 
+                    str++;
 
                 // reset pointer
                 mv = end;
 
                 // start from the back and stop at the first bracket
-                mv--; str++;
+                mv--; 
                 if (b > 1) {
                     while (*mv != '}')
                         mv--;
@@ -642,7 +655,10 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
                     // define a new stop
                     while (*mv != ',')
                         mv--;
-                    mv--; // one more time
+
+                    // if result not null
+                    if (*(str) != 'n')
+                        mv--; // one more time
                 }
                 // length of memory to allocate
                 count = mv - str + 2;
@@ -698,8 +714,11 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
 
 }
 
-struct Block* parse_and_cache_block(char* buf) 
+struct Block* parse_and_cache_block(char* buf, const char* method) 
 {
+    // this function parses block strings for methods like
+    // -chain_getHeader, -chain_getBlock etc.
+
     char* str;
     char* parent_hash;
     char* number;
@@ -728,6 +747,7 @@ struct Block* parse_and_cache_block(char* buf)
     char* s5;
     char* s6 = extrinsics;
     char* s7 = justifications;
+    bool get_block;
 
     // logs shouldn't be more than 10, hopefully
     char* logs[10];
@@ -739,11 +759,18 @@ struct Block* parse_and_cache_block(char* buf)
     for (j = 0; j < 10; j++) 
         logs[j] = (char*) malloc(LOG_MEMORY_LENGTH);
         
+    // difference between the funtion tells on some variables
+    if (!strcmp(method, "getBlock")) {
+        n = 0;
+        get_block = true;
+    } else {
+        n = 2;
+        get_block = false;
+    }
 
     str = buf;
-    n = i = lc = 0;
+    i = lc = 0;
     s5 = logs[i];
-
 
     while (*str) {
         if (*str == ':') {
@@ -778,18 +805,21 @@ struct Block* parse_and_cache_block(char* buf)
                     str++; s4++;
                 }
             } else if (n == 7) {
-                // get each log
-                str += 3;
+                // skip log if youre not getting block
+                if (get_block) {
+                    // get each log
+                    str += 3;
 
-                while (*str != '}') {
-                    while (*str != '"') {
-                        *s5 = *str;
-                        str++; s5++;
+                    while (*str != '}') {
+                        while (*str != '"') {
+                            *s5 = *str;
+                            str++; s5++;
+                        }
+
+                        str += 2;
+                        i++; str++;
+                        s5 = logs[i];
                     }
-
-                    str += 2;
-                    i++; str++;
-                    s5 = logs[i];
                 }
             } else if (n == 8) {
                 // get extrinsics
@@ -814,7 +844,7 @@ struct Block* parse_and_cache_block(char* buf)
 
     for (j = 0; j < 10; j++) {
         if (isdigit(logs[j][0])) {
-            new_logs[j] = (char*) malloc(LOG_MEMORY_LENGTH);
+            new_logs[j] = alloc_mem(logs[j]);
             strcpy(new_logs[j], logs[j]);
 
             // increment logs count
@@ -838,7 +868,9 @@ struct Block* parse_and_cache_block(char* buf)
     blovk->justifications = justifications;
     blovk->blok_log = bl_logs;
 
-    append_block(blovk);
+    if (get_block)
+        append_block(blovk);
+
     return blovk;
 }
 
@@ -895,7 +927,13 @@ static void remove_block(struct Block* blovk) {
         for (j = 0; j < blovk->blok_log->logs_count; j++)
             free(blovk->blok_log->logs[j]);
 
+        free(blovk->extrinsic_root);
+        free(blovk->extrinsics);
+        free(blovk->justifications);
+        free(blovk->parant_hash);
+        free(blovk->state_root);
         free(blovk);
+
         return;
 
     } else {        
@@ -913,6 +951,11 @@ static void remove_block(struct Block* blovk) {
         for (j = 0; j < start->blok_log->logs_count; j++)
             free(start->blok_log->logs[j]);
 
+        free(blovk->extrinsic_root);
+        free(blovk->extrinsics);
+        free(blovk->justifications);
+        free(blovk->parant_hash);
+        free(blovk->state_root);
         free(start);
     }
 }
