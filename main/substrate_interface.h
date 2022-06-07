@@ -1,5 +1,4 @@
 
-
 static struct Substrate {
     char* url;
     int port;
@@ -30,7 +29,6 @@ static struct Substrate {
     struct Metadata_Decoder* m_decoder;
     double runtime_version;
     double transaction_version;
-    char* block_hash;
     int block_id;
     int metadata_cache;
     int type_registry_cache;
@@ -40,9 +38,10 @@ static struct Substrate {
     struct Config* config;
     int session;
 
-    struct Block* block;
+    struct Block* block_cache;
 
 } Self ;
+
 
 
 

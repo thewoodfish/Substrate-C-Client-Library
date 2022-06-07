@@ -349,15 +349,6 @@ int set_ss58_format(int val) {
     return Self.ss58_format;
 }
 
-// def implements_scaleinfo(self) -> Optional[bool]:
-//         if self.metadata_decoder:
-//             return self.metadata_decoder.portable_registry is not None
-
-// bool sc_implements_scaleinfo() {
-//     if (Self.m_decoder != NULL) 
-
-// }
-
 char* sc_get_chain_head() {
     char** param = NULL;
     return rpc_request("chain_getHead", param, NULL);

@@ -524,31 +524,6 @@ void strip(char* str) {
     free(buf);
 }
 
-// char* get_type(struct Type_Reg* self, char* str) 
-// {
-//     struct Types *ty, *curr;
-
-//     if (self->types) {
-//         ty = self->types;
-//         while (ty) {
-//             if (!strcmp(ty->name, str))
-//                 return ty->val;
-
-//             ty = ty->next;
-//         }
-//     }
-
-//     return NULL;
-// }
-
-struct Block* parse_and_cache_block(char* buf) 
-{
-    struct Block* bl;
-    bl = (struct Block*) malloc(sizeof(__Blovk));
-
-    return bl;
-}
-
 static void parse_rpc_error(struct Req_queue* rmq,char* buf)
 {
     char* str = buf;
@@ -721,4 +696,223 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
     free(space);
     free(box);
 
+}
+
+struct Block* parse_and_cache_block(char* buf) 
+{
+    char* str;
+    char* parent_hash;
+    char* number;
+    char* state_root;
+    char* extrinsics_root;
+    char* extrinsics;
+    char* justifications;
+    struct Block* blovk;
+    struct Block_log* bl_logs;
+
+    // allocate memory for block and logs
+    blovk = (struct Block*) malloc(sizeof(__Blovk));
+    bl_logs = (struct Block_log*) malloc(sizeof(__Logz));
+
+    parent_hash = (char*) malloc(96);
+    number = (char*) malloc(10);
+    state_root = (char*) malloc(96);
+    extrinsics_root = (char*) malloc(96);
+    extrinsics = (char*) malloc(96);
+    justifications = (char*) malloc(96);
+    
+    char* s1 = parent_hash;
+    char* s2 = number;
+    char* s3 = state_root;
+    char* s4 = extrinsics_root;
+    char* s5;
+    char* s6 = extrinsics;
+    char* s7 = justifications;
+
+    // logs shouldn't be more than 10, hopefully
+    char* logs[10];
+    char* new_logs[10];
+
+    int n, i, j, lc;
+
+    // allocate memory for logs
+    for (j = 0; j < 10; j++) 
+        logs[j] = (char*) malloc(LOG_MEMORY_LENGTH);
+        
+
+    str = buf;
+    n = i = lc = 0;
+    s5 = logs[i];
+
+
+    while (*str) {
+        if (*str == ':') {
+            if (n == 2) {
+                // get parent hash
+                str += 2;
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
+                }
+            } else if (n == 3) {
+                // get blovk number (string)
+                str += 2;
+                while (*str != '"') {
+                    *s2 = *str;
+                    str++; s2++;
+                }
+            } else if (n == 4) {
+                // get state root
+                str += 2;
+                while (*str != '"') {
+                    *s3 = *str;
+                    str++; s3++;
+                }
+            } else if (n == 5) {
+                // get extrinsics root
+                while (!isalnum(*str)) 
+                    str++;
+
+                while (*str != '"') {
+                    *s4 = *str;
+                    str++; s4++;
+                }
+            } else if (n == 7) {
+                // get each log
+                str += 3;
+
+                while (*str != '}') {
+                    while (*str != '"') {
+                        *s5 = *str;
+                        str++; s5++;
+                    }
+
+                    str += 2;
+                    i++; str++;
+                    s5 = logs[i];
+                }
+            } else if (n == 8) {
+                // get extrinsics
+                str += 3;
+                while (*str != '"') {
+                    *s6 = *str;
+                    str++; s6++;
+                }
+            } else if (n == 9) {
+                str++;
+                while (*str) {
+                    *s7 = *str;
+                    str++; s7++;
+                }
+            }
+    
+            n++;
+        }
+
+        str++;
+    }
+
+    for (j = 0; j < 10; j++) {
+        if (isdigit(logs[j][0])) {
+            new_logs[j] = (char*) malloc(LOG_MEMORY_LENGTH);
+            strcpy(new_logs[j], logs[j]);
+
+            // increment logs count
+            lc++;
+        }
+        // free logs, because the memory they occupy somehow makes no sense
+        free(logs[j]);
+    }
+
+    // set up logs
+    bl_logs->block_no = (int) strtol(number, NULL, 0);
+    bl_logs->logs_count = lc;
+    bl_logs->logs = new_logs;
+
+    // assign pointers
+    blovk->block_number = (int) strtol(number, NULL, 0);
+    blovk->parant_hash = parent_hash;
+    blovk->state_root = state_root;
+    blovk->extrinsic_root = extrinsics_root;
+    blovk->extrinsics = extrinsics;
+    blovk->justifications = justifications;
+    blovk->blok_log = bl_logs;
+
+    append_block(blovk);
+    return blovk;
+}
+
+static void append_block(struct Block* new) {
+    struct Block* end = Self.block_cache;
+    int i;
+
+    i = 0;
+    
+    if (end == NULL) 
+        end = new;
+    else {
+        // else keep looping unti end
+        while (end != NULL) 
+            end = end->next;
+
+        end->next = new;
+    }
+
+    // check for block cache limit
+    // if limit is reached, delete from the back
+    
+    // count the blocks
+    end = Self.block_cache;
+    while (end) {
+        i++;
+        end = end->next;
+    }
+
+    if (i > CACHE_LENGTH) 
+        remove_block(Self.block_cache);
+}
+
+/**
+ * @brief Delete message from the block cache
+ * 
+ * @param req A pointer to the block structure
+ * 
+ */
+static void remove_block(struct Block* blovk) {
+    struct Block* start;
+    struct Block* prev;
+    int j;
+
+    start = Self.block_cache;
+
+    if (start == blovk) {
+        if (start->next != NULL) 
+            Self.block_cache = start->next;
+        else 
+            Self.block_cache = NULL;
+
+        // free all the logs first
+        for (j = 0; j < blovk->blok_log->logs_count; j++)
+            free(blovk->blok_log->logs[j]);
+
+        free(blovk);
+        return;
+
+    } else {        
+        while (start != NULL && start != blovk) {
+            prev = start;
+            start = start->next;
+        }
+
+        if (start == NULL)
+            return;
+
+        prev->next = start->next;
+
+        // free block logs
+        for (j = 0; j < start->blok_log->logs_count; j++)
+            free(start->blok_log->logs[j]);
+
+        free(start);
+    }
 }

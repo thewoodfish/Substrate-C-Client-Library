@@ -4,6 +4,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "../main/substrate_interface.h"
+
+#define LOG_MEMORY_LENGTH 512
+#define CACHE_LENGTH 10
+
 
 struct Payload {
     double jsonrpc;
@@ -12,6 +17,23 @@ struct Payload {
     int id;
     
 };
+
+struct Block {
+    int block_number;
+    char* parant_hash;
+    char* state_root;
+    char* extrinsic_root;
+    char* extrinsics;
+    char* justifications;
+    struct Block_log* blok_log;
+    struct Block* next;
+} __Blovk;
+
+struct Block_log {
+    int block_no;
+    int logs_count;
+    char** logs;
+} __Logz;
 
 // RPC message queue (a linked list)
 struct Req_queue {
@@ -107,10 +129,13 @@ int main(void) {
     // strip(str);
     
     // printf("%s\n", str);
-    char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"ss58Format\":0,\"tokenDecimals\":10,\"tokenSymbol\":\"DOT\"},\"id\":\"1\"}";
+    // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"ss58Format\":0,\"tokenDecimals\":10,\"tokenSymbol\":\"DOT\"},\"id\":\"1\"}";
     // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"block\":{\"header\":{\"parentHash\":\"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066\",\"number\":\"0x4\",\"stateRoot\":\"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01\",\"extrinsicsRoot\":\"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb\",\"digest\":{\"logs\":[\"0x066175726120e9846f1000000000\",\"0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85\"]}},\"extrinsics\":[\"0x280402000bf014bb358101\"]},\"justifications\":null},\"id\":\"2\"}";
     
-    parse_json_string(buf);
+    char buf[] = "\"block\":{\"header\":{\"parentHash\":\"0x5650462b8284066efa29d46ed8c6e8f265da49d94de2c9a5ad663ebf8e87d3fe\",\"number\":\"0xa\",\"stateRoot\":\"0x1abea41538cd04daf6d439616a3c9c1a478142733cfd3fc3dc439c1efd62cca1\",\"extrinsicsRoot\":\"0xb22479f86cd53dc80c225e2352ab2700b4a99950391678db75427bd62c0c838f\",\"digest\":{\"logs\":[\"0x066175726120d8a76f1000000000\",\"0x056175726101013684d67f71a162adc9b756b0f0098a22eea961d0542f075b5e57ad48f69a767e17c2aedc768b393b2a208137764e48eb52cc8497c3e0aabd750946af6e96b284\"]}},\"extrinsics\":[\"0x280402000b80d6ed388101\"]},\"justifications\":null";
+
+
+    parse_and_cache_block(buf);
 }
 
 
@@ -695,38 +720,212 @@ void parse_block_hash(char* buf)
 
 struct Block* parse_and_cache_block(char* buf) 
 {
-    // "block":{"header":{"parentHash":"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066","number":"0x4",
-    // "stateRoot":"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01","extrinsicsRoot"
-    // :"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb","digest":{"logs":["0x066175726120e9846f1000000000",
-    // "0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85"]
-
-    // {"jsonrpc":"2.0","result":{"block":{"header":{"parentHash":"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066","number":"0x4",
-    // "stateRoot":"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01","extrinsicsRoot":
-    // "0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb","digest":{"logs":["0x066175726120e9846f1000000000",
-    // "0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85"]}},
-    // "extrinsics":["0x280402000bf014bb358101"]},"justifications":null},"id":"2"}
-
     char* str;
     char* parent_hash;
     char* number;
     char* state_root;
     char* extrinsics_root;
+    char* extrinsics;
+    char* justifications;
+    struct Block* blovk;
+    struct Block_log* bl_logs;
+
+    // allocate memory for block and logs
+    blovk = (struct Block*) malloc(sizeof(__Blovk));
+    bl_logs = (struct Block_log*) malloc(sizeof(__Logz));
+
+    parent_hash = (char*) malloc(96);
+    number = (char*) malloc(10);
+    state_root = (char*) malloc(96);
+    extrinsics_root = (char*) malloc(96);
+    extrinsics = (char*) malloc(96);
+    justifications = (char*) malloc(96);
+    
+    char* s1 = parent_hash;
+    char* s2 = number;
+    char* s3 = state_root;
+    char* s4 = extrinsics_root;
+    char* s5;
+    char* s6 = extrinsics;
+    char* s7 = justifications;
 
     // logs shouldn't be more than 10, hopefully
     char* logs[10];
-    int n;
+    char* new_logs[10];
+
+    int n, i, j, lc;
+
+    // allocate memory for logs
+    for (j = 0; j < 10; j++) 
+        logs[j] = (char*) malloc(LOG_MEMORY_LENGTH);
+        
 
     str = buf;
-    n = 0;
+    n = i = lc = 0;
+    s5 = logs[i];
+
 
     while (*str) {
         if (*str == ':') {
-            if (!n) {
-                
-            }
+            if (n == 2) {
+                // get parent hash
+                str += 2;
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
+                }
+            } else if (n == 3) {
+                // get blovk number (string)
+                str += 2;
+                while (*str != '"') {
+                    *s2 = *str;
+                    str++; s2++;
+                }
+            } else if (n == 4) {
+                // get state root
+                str += 2;
+                while (*str != '"') {
+                    *s3 = *str;
+                    str++; s3++;
+                }
+            } else if (n == 5) {
+                // get extrinsics root
+                while (!isalnum(*str)) 
+                    str++;
 
+                while (*str != '"') {
+                    *s4 = *str;
+                    str++; s4++;
+                }
+            } else if (n == 7) {
+                // get each log
+                str += 3;
+
+                while (*str != '}') {
+                    while (*str != '"') {
+                        *s5 = *str;
+                        str++; s5++;
+                    }
+
+                    str += 2;
+                    i++; str++;
+                    s5 = logs[i];
+                }
+            } else if (n == 8) {
+                // get extrinsics
+                str += 3;
+                while (*str != '"') {
+                    *s6 = *str;
+                    str++; s6++;
+                }
+            } else if (n == 9) {
+                str++;
+                while (*str) {
+                    *s7 = *str;
+                    str++; s7++;
+                }
+            }
+    
             n++;
         }
+
+        str++;
     }
 
+    for (j = 0; j < 10; j++) {
+        if (isdigit(logs[j][0])) {
+            new_logs[j] = (char*) malloc(LOG_MEMORY_LENGTH);
+            strcpy(new_logs[j], logs[j]);
+
+            // increment logs count
+            lc++;
+        }
+        // free logs, because the memory they occupy somehow makes no sense
+        free(logs[j]);
+    }
+
+    // set up logs
+    bl_logs->block_no = (int) strtol(number, NULL, 0);
+    bl_logs->logs_count = lc;
+    bl_logs->logs = new_logs;
+
+    for (j = 0; j < bl_logs->logs_count; j++)
+        printf("%s\n", bl_logs->logs[j]);
+
+    // assign pointers
+    blovk->block_number = (int) strtol(number, NULL, 0);
+    blovk->parant_hash = parent_hash;
+    blovk->state_root = state_root;
+    blovk->extrinsic_root = extrinsics_root;
+    blovk->extrinsics = extrinsics;
+    blovk->justifications = justifications;
+    blovk->blok_log = bl_logs;
+
+    append_block(blovk);
+
+    return blovk;
+}
+
+void append_block(struct Block* new) {
+    struct Block* end = Self.block_cache;
+    int i;
+
+    i = 0;
+    
+    if (end == NULL) 
+        end = new;
+    else {
+        // else keep looping unti end
+        while (end != NULL) 
+            end = end->next;
+
+        end->next = new;
+    }
+
+    // check for block cache limit
+    // if limit is reached, delete from the back
+    
+    // count the blocks
+    end = Self.block_cache;
+    while (end) {
+        i++;
+        end = end->next;
+    }
+
+    if (i > CACHE_LENGTH) 
+        remove_block(Self.block_cache);
+}
+
+/**
+ * @brief Delete message from the block cache
+ * 
+ * @param req A pointer to the block structure
+ * 
+ */
+void remove_block(struct Block* blovk) {
+    struct Block* start = Self.block_cache;
+    struct Block* prev;
+
+    if (start == blovk) {
+        if (start->next != NULL) 
+            Self.block_cache = start->next;
+        else 
+            Self.block_cache = NULL;
+
+        free(blovk);
+        return;
+
+    } else {        
+        while (start != NULL && start != blovk) {
+            prev = start;
+            start = start->next;
+        }
+
+        if (start == NULL)
+            return;
+
+        prev->next = start->next;
+
+        free(start);
+    }
 }

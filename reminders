@@ -15,6 +15,7 @@
 // FREE ALL MEMORY LOCATIONS
 // ALSO LOOK AT CONCURRENCY - MUTEX LOCKS
 // EXAMINE ALL RETURN VALUES FOR PUBLIC API
+// deal well with linkage and extern
 
 // {
 //   "jsonrpc": "2.0",
@@ -44,3 +45,5 @@
 // gcc test2.c ../cScale/src/scale.c ../cScale/src/type/boolean.c
 
 // gcc test2.c ../cScale/src/scale.c ../cScale/src/type/compact.c ../cScale/src/util/hex.c
+
+// "block":{"header":{"parentHash":"0x5650462b8284066efa29d46ed8c6e8f265da49d94de2c9a5ad663ebf8e87d3fe","number":"0x4","stateRoot":"0x1abea41538cd04daf6d439616a3c9c1a478142733cfd3fc3dc439c1efd62cca1","extrinsicsRoot":"0xb22479f86cd53dc80c225e2352ab2700b4a99950391678db75427bd62c0c838f","digest":{"logs":["0x066175726120d8a76f1000000000","0x056175726101013684d67f71a162adc9b756b0f0098a22eea961d0542f075b5e57ad48f69a767e17c2aedc768b393b2a208137764e48eb52cc8497c3e0aabd750946af6e96b284"]}},"extrinsics":["0x280402000b80d6ed388101"]},"justifications":null
