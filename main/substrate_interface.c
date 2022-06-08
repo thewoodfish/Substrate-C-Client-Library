@@ -101,9 +101,19 @@ static void connect_websocket()
 
         // create connection and return socket descriptor
         Self.websocket = connect_websock(Self.url);
+
+        possibly_exit_rudely();
     }
 
     free(qbuf);
+}
+
+static void possibly_exit_rudely(void) {
+    if (Self.websocket <= 0) {
+        printf("%s\n", "Aborting...");
+        free_all_mem();
+        exit(1);
+    }
 }
 
 /**
@@ -194,6 +204,7 @@ static char* rpc_request(char* method, char** params, void* result_handler)
                 fprintf(stderr, "Error %s\n", req->result);
                 // clear result
                 memset(req->result, 0x00, strlen(req->result));
+                return NULL;
             }
 
             // chain to linked list {to be freed later}
@@ -245,6 +256,8 @@ static void free_all_mem() {
 }
 
 char* sc_name() {
+    possibly_exit_rudely();
+
     char* buf;
     char** param = NULL;
 
@@ -260,6 +273,8 @@ char* sc_name() {
 }
 
 struct Props* sc_properties() {
+    possibly_exit_rudely();
+
     char* buf;
     char** param = NULL;
 
@@ -274,6 +289,8 @@ struct Props* sc_properties() {
 }
 
 char* sc_chain() {
+    possibly_exit_rudely();
+
     char* buf;
     char** param = NULL;
 
@@ -289,6 +306,8 @@ char* sc_chain() {
 }
 
 char* sc_version() {
+    possibly_exit_rudely();
+
     char* buf;
     char** param = NULL;
 
@@ -304,6 +323,8 @@ char* sc_version() {
 }
 
 int sc_token_decimals() {
+    possibly_exit_rudely();
+
     if (!Self.token_decimals) 
         if (Self.properties->tokenDecimals) 
             Self.token_decimals = Self.properties->tokenDecimals;
@@ -312,12 +333,16 @@ int sc_token_decimals() {
 }
 
 int set_token_decimal(int val) {
+    possibly_exit_rudely();
+
     Self.token_decimals = val;
 
     return Self.token_decimals;
 }
 
 char* sc_token_symbol() {
+    possibly_exit_rudely();
+
     if (!strlen(Self.token_symbol)) {
         if (strlen(Self.properties->tokenSymbol)) 
             strcpy(Self.token_symbol, Self.properties->tokenSymbol);
@@ -335,6 +360,8 @@ char* set_token_symbol(const char* token) {
 }
 
 int sc_ss58_format() {
+    possibly_exit_rudely();
+
     if (!Self.ss58_format) 
         if (Self.properties->ss58Format) 
             Self.ss58_format = Self.properties->ss58Format;
@@ -345,6 +372,8 @@ int sc_ss58_format() {
 }
 
 int set_ss58_format(int val) {
+    possibly_exit_rudely();
+
     Self.ss58_format = val;
     Self.runtime_config->ss58_format = val;
 
@@ -352,16 +381,22 @@ int set_ss58_format(int val) {
 }
 
 char* sc_get_chain_head() {
+    possibly_exit_rudely();
+
     char** param = NULL;
     return rpc_request("chain_getHead", param, NULL);
 }
 
 char* sc_get_chain_finalised_head() {
+    possibly_exit_rudely();
+
     char** param = NULL;
     return rpc_request("chain_getFinalisedHead", param, NULL);
 }
 
 char* sc_get_block_hash(const char* block_id) {
+    possibly_exit_rudely();
+
     // make sure 'block_id' is a hexadecimal string
     char* buf;
     char* param[2];
@@ -385,6 +420,8 @@ static void add_param(char** param, char* buf) {
 
 struct Block* sc_get_chain_block(const char* block_hash, const char* block_id) 
 {
+    possibly_exit_rudely();
+
     char* param[2];
     char* buf;
 
@@ -396,16 +433,28 @@ struct Block* sc_get_chain_block(const char* block_hash, const char* block_id)
     buf = rpc_request("chain_getBlock", param, NULL);
 
     // if error or is_empty
-    if (!buf || !strcmp(buf, "empty") || !strcmp(buf, "null") || strstr(buf, "Error")) {
+    if (is_error(buf))
         return NULL;
-    } else {
+    else
         // save block data to client
         return parse_and_cache_block(buf, "getBlock");
-    }
+}
+
+static bool is_error(const char* buf) {
+    bool res;
+
+    if (!buf || !strcmp(buf, "empty") || !strcmp(buf, "null") || strstr(buf, "Error") || !strcmp(buf, "(null)")) 
+        res = true;
+    else    
+        res = false;
+
+    return res;
 }
 
 int sc_get_block_number(const char* block_hash) 
 {
+    possibly_exit_rudely();
+
     char* buf;
     char* param[2];
     int block_no;
@@ -416,7 +465,7 @@ int sc_get_block_number(const char* block_hash)
     buf = rpc_request("chain_getHeader", param, NULL);
 
     // if error or is_empty
-    if (!buf || !strcmp(buf, "empty") || !strcmp(buf, "null") || strstr(buf, "Error")) ;
+    if (is_error(buf)) ;
     else {
         // save block data to client
         bl = parse_and_cache_block(buf, "getHeader");
@@ -429,19 +478,49 @@ int sc_get_block_number(const char* block_hash)
     return block_no;
 }
 
-void sc_get_metadata(const char* block_hash) 
+char* sc_get_metadata(const char* block_hash) 
 {
+    possibly_exit_rudely();
+
     char* param[2] = { NULL, NULL };
     char* buf;
 
     // set global variable to indicate that it's metadata that we're getting
     // because its soo large unlike other data bytes array
     strcpy(chain_method, "state_getMetadata");
-
+    
     if (block_hash)
         add_param(param, (char*) block_hash);
 
     buf = rpc_request("state_getMetadata", param, NULL);
+    
+    // clear
+    clear_n_copy(chain_method, "");
 
-    fprintf(stderr, "%s\n", buf);
+    return buf;
+}
+
+char* sc_get_storage_by_key(const char* block_hash, const char* key) 
+{
+    possibly_exit_rudely();
+
+    char* param[3] = { (char*) block_hash, (char*) key, NULL };
+
+    return rpc_request("state_getStorageAt", param, NULL);
+}
+
+struct Runtime_Version* sc_get_block_runtime_version(const char* block_hash)
+{
+    possibly_exit_rudely();
+
+    char* buf;
+    char* param[2];
+    add_param(param, (char*) block_hash);
+
+    buf = rpc_request("chain_getRuntimeVersion", param, NULL);
+    // exit(1);
+    // if (is_error(buf))
+    //     return NULL;
+    
+    // return decode_runtime_string(buf);
 }

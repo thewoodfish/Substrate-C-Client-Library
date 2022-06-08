@@ -18,6 +18,16 @@ struct Payload {
     
 };
 
+struct Runtime_Version {
+    char* spec_name;
+    char* impl_name;
+    int authoring_version;
+    int spec_version;
+    int impl_version;
+    int transaction_version;
+    int state_version;
+} __RunVerse;
+
 struct Block {
     int block_number;
     char* parant_hash;
@@ -64,7 +74,7 @@ void strip(char* str);
 struct Block* parse_and_cache_block(char* buf);
 void parse_block_hash(char* buf);
 void parse_rpc_error(char* buf);
-
+void decode_runtime_string(const char* buf);
 
 
 char buffer[1024];
@@ -132,10 +142,13 @@ int main(void) {
     // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"ss58Format\":0,\"tokenDecimals\":10,\"tokenSymbol\":\"DOT\"},\"id\":\"1\"}";
     // char buf[] = "{\"jsonrpc\":\"2.0\",\"result\":{\"block\":{\"header\":{\"parentHash\":\"0x800dbd6f47c8d76e5dc7d3409c3431e8d1154917bcf850a8ed5fa166f88e1066\",\"number\":\"0x4\",\"stateRoot\":\"0x71b41e8e9b92717b2a8a2ad4c97105e462970eb2f416ef4131f026bee105bc01\",\"extrinsicsRoot\":\"0x40a0a1ee1dbaa34a261fe7f2dc219fc14901ae354a5530615d719b4e771f83cb\",\"digest\":{\"logs\":[\"0x066175726120e9846f1000000000\",\"0x0561757261010148299fc995bc1100a5e60ec8400fa758e1d79fdaa58f4bd8893c2c6506a2ed635518cd46ceda6f92027a23aaf6baf13f281357a7fee854a5e9edf2d32cc08a85\"]}},\"extrinsics\":[\"0x280402000bf014bb358101\"]},\"justifications\":null},\"id\":\"2\"}";
     
-    char buf[] = "\"block\":{\"header\":{\"parentHash\":\"0x5650462b8284066efa29d46ed8c6e8f265da49d94de2c9a5ad663ebf8e87d3fe\",\"number\":\"0xa\",\"stateRoot\":\"0x1abea41538cd04daf6d439616a3c9c1a478142733cfd3fc3dc439c1efd62cca1\",\"extrinsicsRoot\":\"0xb22479f86cd53dc80c225e2352ab2700b4a99950391678db75427bd62c0c838f\",\"digest\":{\"logs\":[\"0x066175726120d8a76f1000000000\",\"0x056175726101013684d67f71a162adc9b756b0f0098a22eea961d0542f075b5e57ad48f69a767e17c2aedc768b393b2a208137764e48eb52cc8497c3e0aabd750946af6e96b284\"]}},\"extrinsics\":[\"0x280402000b80d6ed388101\"]},\"justifications\":null";
+    // char buf[] = "\"block\":{\"header\":{\"parentHash\":\"0x5650462b8284066efa29d46ed8c6e8f265da49d94de2c9a5ad663ebf8e87d3fe\",\"number\":\"0xa\",\"stateRoot\":\"0x1abea41538cd04daf6d439616a3c9c1a478142733cfd3fc3dc439c1efd62cca1\",\"extrinsicsRoot\":\"0xb22479f86cd53dc80c225e2352ab2700b4a99950391678db75427bd62c0c838f\",\"digest\":{\"logs\":[\"0x066175726120d8a76f1000000000\",\"0x056175726101013684d67f71a162adc9b756b0f0098a22eea961d0542f075b5e57ad48f69a767e17c2aedc768b393b2a208137764e48eb52cc8497c3e0aabd750946af6e96b284\"]}},\"extrinsics\":[\"0x280402000b80d6ed388101\"]},\"justifications\":null";
+    char buf[] = "\"specName\":\"node-template\",\"implName\":\"node-template\",\"authoringVersion\":1,\"specVersion\":100,\"implVersion\":1,\"apis\":[[\"0xdf6acb689907609b\",4],[\"0x37e397fc7c91f5e4\",1],[\"0x40fe3ad401f8959a\",6],[\"0xd2bc9897eed08f15\",3],[\"0xf78b278be53f454c\",2],[\"0xdd718d5cc53262d4\",1],[\"0xab3c0572291feb8b\",1],[\"0xed99c5acb25eedf5\",3],[\"0xbc9d89904f5b923f\",1],[\"0x37c8bb1350a9a2a8\",1]],\"transactionVersion\":1,\"stateVersion\":1";
 
+    // parse_and_cache_block(buf);
+    decode_runtime_string(buf);
 
-    parse_and_cache_block(buf);
+    
 }
 
 
@@ -861,71 +874,116 @@ struct Block* parse_and_cache_block(char* buf)
     blovk->justifications = justifications;
     blovk->blok_log = bl_logs;
 
-    append_block(blovk);
+    // append_block(blovk);
 
     return blovk;
 }
 
-void append_block(struct Block* new) {
-    struct Block* end = Self.block_cache;
-    int i;
 
-    i = 0;
+void decode_runtime_string(const char* buf)
+{
+    char* str;
+    char* spec_name;
+    char* impl_name;
+    char* auth_version;
+    char* spec_version;
+    char* impl_version;
+    char* trans_version;
+    char* state_version;
+    struct Runtime_Version* runv;
+
+    spec_name = (char*) malloc(96);
+    impl_name = (char*) malloc(96);
+    auth_version = (char*) malloc(10);
+    spec_version = (char*) malloc(10);
+    impl_version = (char*) malloc(10);
+    trans_version = (char*) malloc(10);
+    state_version = (char*) malloc(10);
+
+    runv = Self.run_version;
     
-    if (end == NULL) 
-        end = new;
-    else {
-        // else keep looping unti end
-        while (end != NULL) 
-            end = end->next;
+    char* s1 = spec_name;
+    char* s2 = impl_name;
+    char* s3 = auth_version;
+    char* s4 = spec_version;
+    char* s5 = impl_version;
+    char* s6 = trans_version;
+    char* s7 = state_version;
 
-        end->next = new;
-    }
+    int n, i, j, lc;
 
-    // check for block cache limit
-    // if limit is reached, delete from the back
+    str = (char*) buf;
+    n = i = lc = 0;
+
+    while (*str) {
+        if (*str == ':') {
+            if (!n) {
+                str += 2;
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
+                }
+            } else if (n == 1) {
+                str += 2;
+                while (*str != '"') {
+                    *s2 = *str;
+                    str++; s2++;
+                }
+            } else if (n == 2) {
+                str++;
+                while (*str != '"') {
+                    *s3 = *str;
+                    str++; s3++;
+                }
+            } else if (n == 3) {
+                str++;
+                while (*str != '"') {
+                    *s4 = *str;
+                    str++; s4++;
+                }
+            } else if (n == 4) {                
+                str++;
+                while (*str != '"') {
+                    *s5 = *str;
+                    str++; s5++;
+                }
+            } else if (n == 6) {
+                str++;
+                while (*str != '"') {
+                    *s6 = *str;
+                    str++; s6++;
+                }
+            } else if (n == 7) {
+                str++;
+                while (*str) {
+                    *s7 = *str;
+                    str++; s7++;
+                }
+            }
     
-    // count the blocks
-    end = Self.block_cache;
-    while (end) {
-        i++;
-        end = end->next;
-    }
-
-    if (i > CACHE_LENGTH) 
-        remove_block(Self.block_cache);
-}
-
-/**
- * @brief Delete message from the block cache
- * 
- * @param req A pointer to the block structure
- * 
- */
-void remove_block(struct Block* blovk) {
-    struct Block* start = Self.block_cache;
-    struct Block* prev;
-
-    if (start == blovk) {
-        if (start->next != NULL) 
-            Self.block_cache = start->next;
-        else 
-            Self.block_cache = NULL;
-
-        free(blovk);
-        return;
-
-    } else {        
-        while (start != NULL && start != blovk) {
-            prev = start;
-            start = start->next;
+            n++;
         }
 
-        if (start == NULL)
-            return;
-
-        prev->next = start->next;
-
-        free(start);
+        str++;
     }
+
+    // assign values
+    strcpy(runv->spec_name, spec_name);
+    strcpy(runv->impl_name, impl_name);
+    runv->authoring_version = atoi(auth_version);
+    runv->spec_version = atoi(spec_version);
+    runv->impl_version = atoi(impl_version);
+    runv->transaction_version = atoi(trans_version);
+    runv->state_version = atoi(state_version);
+
+    // free the memory allocated
+    free(spec_name);
+    free(impl_name);
+    free(auth_version);
+    free(spec_version);
+    free(impl_version);
+    free(trans_version);
+    free(state_version);
+
+    return runv;
 }

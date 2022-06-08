@@ -89,7 +89,7 @@ static bool in_array(char** array, char* str) {
 char* json_dump_payload(struct Payload* p) 
 {
     int j, count = 0;
-    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", "chain_getHeader", "state_getMetadata", NULL };
+    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", "chain_getHeader", "state_getMetadata", "chain_getRuntimeVersion", NULL };
 
     char* dummy = (char*) malloc(1024);
     char* buf = (char*) malloc(1024);
@@ -205,6 +205,8 @@ void remove_rpc_message(struct Req_queue* req) {
         else 
             Self.rpc_message_queue = NULL;
 
+        free(req->result);
+        free(req->jsonrpc);
         free(req);
         return;
 
@@ -219,6 +221,8 @@ void remove_rpc_message(struct Req_queue* req) {
 
         prev->next = start->next;
 
+        free(start->result);
+        free(start->jsonrpc);
         free(start);
     }
 }
@@ -593,8 +597,9 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf)
     mv = end;
 
     // metadata requires a lot of space
-    if (!strcmp(chain_method, "state_getMetadata"))
+    if (!strcmp(chain_method, "state_getMetadata")) {
         bytes = 70410;
+    }
     else    
         bytes = 3072;
     
@@ -958,4 +963,109 @@ static void remove_block(struct Block* blovk) {
         free(blovk->state_root);
         free(start);
     }
+}
+
+struct Runtime_Version* decode_runtime_string(const char* buf)
+{
+    char* str;
+    char* spec_name;
+    char* impl_name;
+    char* auth_version;
+    char* spec_version;
+    char* impl_version;
+    char* trans_version;
+    char* state_version;
+
+    spec_name = (char*) malloc(96);
+    impl_name = (char*) malloc(96);
+    auth_version = (char*) malloc(10);
+    spec_version = (char*) malloc(10);
+    impl_version = (char*) malloc(10);
+    trans_version = (char*) malloc(10);
+    state_version = (char*) malloc(10);
+
+    char* s1 = spec_name;
+    char* s2 = impl_name;
+    char* s3 = auth_version;
+    char* s4 = spec_version;
+    char* s5 = impl_version;
+    char* s6 = trans_version;
+    char* s7 = state_version;
+
+    int n, i, j, lc;
+
+    str = (char*) buf;
+    n = i = lc = 0;
+
+    while (*str) {
+        if (*str == ':') {
+            if (!n) {
+                str += 2;
+                while (*str != '"') {
+                    *s1 = *str;
+                    str++; s1++;
+                }
+            } else if (n == 1) {
+                str += 2;
+                while (*str != '"') {
+                    *s2 = *str;
+                    str++; s2++;
+                }
+            } else if (n == 2) {
+                str++;
+                while (*str != '"') {
+                    *s3 = *str;
+                    str++; s3++;
+                }
+            } else if (n == 3) {
+                str++;
+                while (*str != '"') {
+                    *s4 = *str;
+                    str++; s4++;
+                }
+            } else if (n == 4) {                
+                str++;
+                while (*str != '"') {
+                    *s5 = *str;
+                    str++; s5++;
+                }
+            } else if (n == 6) {
+                str++;
+                while (*str != '"') {
+                    *s6 = *str;
+                    str++; s6++;
+                }
+            } else if (n == 7) {
+                str++;
+                while (*str) {
+                    *s7 = *str;
+                    str++; s7++;
+                }
+            }
+    
+            n++;
+        }
+
+        str++;
+    }
+    
+    // assign values
+    strcpy(Self.run_version->spec_name, spec_name);
+    strcpy(Self.run_version->impl_name, impl_name);
+    Self.run_version->authoring_version = atoi(auth_version);
+    Self.run_version->spec_version = atoi(spec_version);
+    Self.run_version->impl_version = atoi(impl_version);
+    Self.run_version->transaction_version = atoi(trans_version);
+    Self.run_version->state_version = atoi(state_version);
+
+    // free the memory allocated
+    free(spec_name);
+    free(impl_name);
+    free(auth_version);
+    free(spec_version);
+    free(impl_version);
+    free(trans_version);
+    free(state_version);
+
+    return Self.run_version;
 }

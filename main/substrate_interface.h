@@ -40,6 +40,8 @@ static struct Substrate {
 
     struct Block* block_cache;
 
+    struct Runtime_Version* run_version;
+
 } Self ;
 
 
@@ -69,7 +71,16 @@ extern char* sc_get_block_hash(const char* block_id);
 extern struct Block* sc_get_chain_block(const char* block_hash, const char* block_id);
 static void add_param(char** param, char* buf);
 extern int sc_get_block_number(const char* block_hash);
-extern void sc_get_metadata(const char* block_hash);
+extern char* sc_get_metadata(const char* block_hash);
+static bool is_error(const char* buf);
+static void possibly_exit_rudely(void);
+extern char* sc_get_storage_by_key(const char* block_hash, const char* key);
+extern struct Runtime_Version* sc_get_block_runtime_version(const char* block_hash);
+
+
+
+
+
 
 
 

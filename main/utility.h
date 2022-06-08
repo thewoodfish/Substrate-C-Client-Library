@@ -1,9 +1,10 @@
 
-#define GLOBAL_BUFFER_SPACE 4096
+#define GLOBAL_BUFFER_SPACE 80000
 #define LOG_MEMORY_LENGTH 512
 
 // length of cache (linked list)
 #define CACHE_LENGTH 10
+#define METADATA CACHE LENGTH 5
 
 // extern variables
 extern char* buffer;
@@ -28,6 +29,8 @@ extern struct Req_queue __RMQ;
 extern struct Payload _____PL;
 extern struct Block __Blovk;
 extern struct Block_log __Logz;
+extern struct Meta_Cache __MetDta;
+extern struct Runtime_Version __RunVerse;
 
 // Websocket connection options
 struct Ws_option {
@@ -99,6 +102,16 @@ struct Block_log {
     char** logs;
 } __Logz;
 
+struct Runtime_Version {
+    char spec_name[96];
+    char impl_name[96];
+    int authoring_version;
+    int spec_version;
+    int impl_version;
+    int transaction_version;
+    int state_version;
+} __RunVerse;
+
 extern char* slice(const char* str, char* result, size_t start, size_t end);
 extern char* ip_to_url(char* url);
 extern void clear_n_copy(char* dest, const char* source);
@@ -120,6 +133,8 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf);
 static void parse_rpc_error(struct Req_queue* rmq,char* buf);
 static void append_block(struct Block* new);
 static void remove_block(struct Block* blovk);
+extern struct Runtime_Version* decode_runtime_string(const char* buf);
+
 
 
 
