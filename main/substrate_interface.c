@@ -504,11 +504,12 @@ char* sc_get_metadata(const char* block_hash)
     return buf;
 }
 
-char* sc_get_storage_by_key(const char* block_hash, const char* key) 
+char* sc_get_storage_by_key(const char* key) 
 {
     possibly_exit_rudely();
+    char* param[2];
 
-    char* param[3] = { (char*) block_hash, (char*) key, NULL };
+    add_param(param, (char*) key);
 
     return rpc_request("state_getStorageAt", param, NULL);
 }

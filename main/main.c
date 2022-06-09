@@ -40,8 +40,7 @@ int main(void) {
 
     // fprintf(stderr, "%s\n", concat);
     // // if (runv)
-    fprintf(stderr, "The storage value is : %s\n",
-     sc_get_storage_by_key("0xbbc6b5e97a2001aad9be75af3caff9f363e911f78c638c40969a9f903026aea0", concat) );
+    fprintf(stderr, "The storage value is : %s\n", sc_get_storage_by_key("0x5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b") );
 
     close_websocket();
 }

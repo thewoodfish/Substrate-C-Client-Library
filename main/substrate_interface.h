@@ -72,7 +72,7 @@ extern int sc_get_block_number(const char* block_hash);
 extern char* sc_get_metadata(const char* block_hash);
 static bool is_error(const char* buf);
 static void possibly_exit_rudely(void);
-extern char* sc_get_storage_by_key(const char* block_hash, const char* key);
+extern char* sc_get_storage_by_key(const char* key);
 extern struct Runtime_Version* sc_get_block_runtime_version(const char* block_hash);
 
 
