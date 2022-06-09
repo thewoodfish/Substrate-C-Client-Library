@@ -1,2 +1,2 @@
 # s-beta
-Testing repo for samaritan middle-ware.
+Testing repo for samaritan
