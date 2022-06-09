@@ -14,6 +14,7 @@
 #include "utility.h"
 #include "network.h"
 #include "substrate_interface.h"
+#include "../xxHash/xxhash.h"
 
 // initialize Self struct
 void init_client(
@@ -41,6 +42,9 @@ void init_client(
 
     // allocate space for runtime config parameters
     Self.runtime_config = (struct Runtime_Config*) malloc(sizeof(__R_con));
+
+    // allocate space for runtime version
+    Self.run_version = (struct Runtime_Version*) malloc(sizeof(struct Runtime_Version));
 
     Self.type_registry_preset = type_registry_preset ? alloc_mem(type_registry_preset) : NULL;
     strcpy(Self.type_registry_preset, type_registry_preset);
@@ -413,7 +417,7 @@ char* sc_get_block_hash(const char* block_id) {
     return result;
 }
 
-static void add_param(char** param, char* buf) {
+inline static void add_param(char** param, char* buf) {
     param[0] = buf;
     param[1] = NULL;
 }
@@ -435,12 +439,12 @@ struct Block* sc_get_chain_block(const char* block_hash, const char* block_id)
     // if error or is_empty
     if (is_error(buf))
         return NULL;
-    else
-        // save block data to client
-        return parse_and_cache_block(buf, "getBlock");
+
+    // save block data to client
+    return parse_and_cache_block(buf, "getBlock");
 }
 
-static bool is_error(const char* buf) {
+inline static bool is_error(const char* buf) {
     bool res;
 
     if (!buf || !strcmp(buf, "empty") || !strcmp(buf, "null") || strstr(buf, "Error") || !strcmp(buf, "(null)")) 
@@ -518,9 +522,8 @@ struct Runtime_Version* sc_get_block_runtime_version(const char* block_hash)
     add_param(param, (char*) block_hash);
 
     buf = rpc_request("chain_getRuntimeVersion", param, NULL);
-    // exit(1);
-    // if (is_error(buf))
-    //     return NULL;
+    if (is_error(buf))
+        return NULL;
     
-    // return decode_runtime_string(buf);
+    return decode_runtime_string(buf);
 }

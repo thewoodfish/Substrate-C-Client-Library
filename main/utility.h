@@ -87,7 +87,7 @@ struct Payload {
 // data of block loaded
 struct Block {
     int block_number;
-    char* parant_hash;
+    char* parent_hash;
     char* state_root;
     char* extrinsic_root;
     char* extrinsics;

@@ -879,7 +879,6 @@ struct Block* parse_and_cache_block(char* buf)
     return blovk;
 }
 
-
 void decode_runtime_string(const char* buf)
 {
     char* str;

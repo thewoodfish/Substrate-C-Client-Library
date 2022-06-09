@@ -89,7 +89,8 @@ static bool in_array(char** array, char* str) {
 char* json_dump_payload(struct Payload* p) 
 {
     int j, count = 0;
-    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", "chain_getHeader", "state_getMetadata", "chain_getRuntimeVersion", NULL };
+    char* special_params[] = { "chain_getHead", "chain_getBlockHash","chain_getBlock", 
+                                "chain_getHeader", "state_getMetadata", "chain_getRuntimeVersion", "state_getStorageAt", NULL };
 
     char* dummy = (char*) malloc(1024);
     char* buf = (char*) malloc(1024);
@@ -866,7 +867,7 @@ struct Block* parse_and_cache_block(char* buf, const char* method)
 
     // assign pointers
     blovk->block_number = (int) strtol(number, NULL, 0);
-    blovk->parant_hash = parent_hash;
+    blovk->parent_hash = parent_hash;
     blovk->state_root = state_root;
     blovk->extrinsic_root = extrinsics_root;
     blovk->extrinsics = extrinsics;
@@ -935,7 +936,7 @@ static void remove_block(struct Block* blovk) {
         free(blovk->extrinsic_root);
         free(blovk->extrinsics);
         free(blovk->justifications);
-        free(blovk->parant_hash);
+        free(blovk->parent_hash);
         free(blovk->state_root);
         free(blovk);
 
@@ -959,7 +960,7 @@ static void remove_block(struct Block* blovk) {
         free(blovk->extrinsic_root);
         free(blovk->extrinsics);
         free(blovk->justifications);
-        free(blovk->parant_hash);
+        free(blovk->parent_hash);
         free(blovk->state_root);
         free(start);
     }

@@ -1,5 +1,5 @@
 
-static struct Substrate {
+struct Substrate {
     char* url;
     int port;
     int websocket;
@@ -27,8 +27,6 @@ static struct Substrate {
     struct Dh* default_handlers;
     int metadata_decoder;
     struct Metadata_Decoder* m_decoder;
-    double runtime_version;
-    double transaction_version;
     int block_id;
     int metadata_cache;
     int type_registry_cache;
