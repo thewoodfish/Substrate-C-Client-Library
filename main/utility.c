@@ -167,6 +167,10 @@ void reset_flag() {
     flag = 0;
 }
 
+int hex_to_int(const char* str) 
+{
+    return (int) strtol(str, NULL, 0);
+}
 
 /**
  * @brief Append message to RMQ linked list
@@ -966,7 +970,7 @@ static void remove_block(struct Block* blovk) {
     }
 }
 
-struct Runtime_Version* decode_runtime_string(const char* buf)
+void decode_runtime_string(struct Runtime_Version* runv, const char* buf)
 {
     char* str;
     char* spec_name;
@@ -1051,13 +1055,13 @@ struct Runtime_Version* decode_runtime_string(const char* buf)
     }
     
     // assign values
-    strcpy(Self.run_version->spec_name, spec_name);
-    strcpy(Self.run_version->impl_name, impl_name);
-    Self.run_version->authoring_version = atoi(auth_version);
-    Self.run_version->spec_version = atoi(spec_version);
-    Self.run_version->impl_version = atoi(impl_version);
-    Self.run_version->transaction_version = atoi(trans_version);
-    Self.run_version->state_version = atoi(state_version);
+    strcpy(runv->spec_name, spec_name);
+    strcpy(runv->impl_name, impl_name);
+    runv->authoring_version = atoi(auth_version);
+    runv->spec_version = atoi(spec_version);
+    runv->impl_version = atoi(impl_version);
+    runv->transaction_version = atoi(trans_version);
+    runv->state_version = atoi(state_version);
 
     // free the memory allocated
     free(spec_name);
@@ -1067,6 +1071,4 @@ struct Runtime_Version* decode_runtime_string(const char* buf)
     free(impl_version);
     free(trans_version);
     free(state_version);
-
-    return Self.run_version;
 }

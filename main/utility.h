@@ -19,7 +19,6 @@ extern struct Config _c_def;
 extern struct Ws_option __WS_opt;
 extern struct Props __Pr;
 extern struct Runtime_Config __R_con;
-extern struct Metadata_Decoder __Met_data;
 extern struct Req_queue __RMQ;
 extern struct Payload _____PL;
 extern struct Block __Blovk;
@@ -29,7 +28,7 @@ extern struct Req_queue __RMQ;
 extern struct Payload _____PL;
 extern struct Block __Blovk;
 extern struct Block_log __Logz;
-extern struct Meta_Cache __MetDta;
+extern struct Metadata_Cache __MetDta;
 extern struct Runtime_Version __RunVerse;
 
 // Websocket connection options
@@ -112,6 +111,11 @@ struct Runtime_Version {
     int state_version;
 } __RunVerse;
 
+struct Metadata_Cache {
+    char* runtime_string;
+    char* metadata;
+} __MetDta;
+
 extern char* slice(const char* str, char* result, size_t start, size_t end);
 extern char* ip_to_url(char* url);
 extern void clear_n_copy(char* dest, const char* source);
@@ -133,7 +137,8 @@ static void parse_block_hash(struct Req_queue* rmq, char* buf);
 static void parse_rpc_error(struct Req_queue* rmq,char* buf);
 static void append_block(struct Block* new);
 static void remove_block(struct Block* blovk);
-extern struct Runtime_Version* decode_runtime_string(const char* buf);
+extern void decode_runtime_string(struct Runtime_Version* runv, const char* buf);
+extern int hex_to_int(const char* str);
 
 
 

@@ -31,16 +31,18 @@ int main(void) {
     init_client("ws://127.0.0.1:9944", 0, 42, NULL, "substrate-node-template", NULL, NULL, true, NULL, true, true);
     // fprintf(stderr, "The chain head is %s\n", sc_get_chain_head()); 
 
-    // bl = sc_get_chain_block("", "0x75");
-    // runv = sc_get_block_runtime_version(bl->parent_hash);
+    bl = sc_get_chain_block("", "0x75");
+    sc_get_block_runtime_version(runv, bl->parent_hash);;
 
     // if (bl)
     //     fprintf(stderr, "The parent hash is %s\n", bl->parent_hash); 
-    sprintf(concat, "0x%lx%lx%lx%lx", one.low64, one.high64, two.low64, two.high64);
+    // sprintf(concat, "0x%lx%lx%lx%lx", one.low64, one.high64, two.low64, two.high64);
 
     // fprintf(stderr, "%s\n", concat);
     // // if (runv)
-    fprintf(stderr, "The storage value is : %s\n", sc_get_storage_by_key("0x5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b") );
+    // fprintf(stderr, "The storage value is : %s\n", sc_get_storage_by_key("0x5c0d1176a568c1f92944340dbfed9e9c530ebca703c85910e7164cb7d1c9e47b") );
+
+    // init_runtime(NULL, "0x909");
 
     close_websocket();
 }

@@ -36,6 +36,9 @@ void init_client(
     Self.runtime_config = runtime_config;
     Self.cache_region = cache_region;
 
+    // allocate storage for latest cached block hash
+    Self.block_hash = (char*) malloc(70);
+
     // allocate space for properties
     Self.properties = (struct Props*) malloc(sizeof(__Pr));
     Self.properties->ss58Format = ss58_format ? ss58_format : 42; // default is 42
@@ -514,7 +517,7 @@ char* sc_get_storage_by_key(const char* key)
     return rpc_request("state_getStorageAt", param, NULL);
 }
 
-struct Runtime_Version* sc_get_block_runtime_version(const char* block_hash)
+void sc_get_block_runtime_version(struct Runtime_Version* runv, const char* block_hash)
 {
     possibly_exit_rudely();
 
@@ -526,5 +529,69 @@ struct Runtime_Version* sc_get_block_runtime_version(const char* block_hash)
     if (is_error(buf))
         return NULL;
     
-    return decode_runtime_string(buf);
+    decode_runtime_string(runv, buf);
+}
+
+char* generate_storage_hash(const char* storage_module, const char* storage_function, char** params, char** hashers)
+{
+    // requires scale codec library
+}
+
+char* convert_storage_parameter(const char* scale_type, const char* value)
+{
+    // requires scale codec library
+}
+
+void init_runtime(const char* block_h, const char* block_id) 
+{
+    char* param[2];
+    char* buf;
+    struct Block* bl;
+    struct Runtime_Version* run_v;
+    char* block_hash = (char*) malloc(70);
+    char* parent_hash = (char*) malloc(70);
+
+    if (block_h) 
+        strcpy(block_hash,"podjfps");
+
+    if (block_id && *block_hash) {
+        fprintf(stderr, "%s\n", "Cannot provide block hash and block id at the same time");
+        return;
+    }
+
+    if (*block_hash && !strcmp(Self.block_hash, block_hash) || (block_id && Self.block_id == hex_to_int(block_id)))
+        return;
+
+    if (block_id) 
+        clear_n_copy(block_hash, sc_get_block_hash(block_id));
+
+    if (*block_hash) 
+        clear_n_copy(block_hash, sc_get_chain_head());
+
+    clear_n_copy(Self.block_hash, block_hash);
+    Self.block_id = hex_to_int(block_id);
+
+    add_param(param, Self.block_hash);
+
+    // get parent hash
+    buf = rpc_request("chain_getHeader", param, NULL);
+    bl = parse_and_cache_block(buf, "getHeader");
+
+    // copy into parent hash
+    strcpy(parent_hash, bl->parent_hash);
+
+    if (!strcmp(parent_hash, "0x0000000000000000000000000000000000000000000000000000000000000000"))
+        sc_get_block_runtime_version(run_v, Self.block_hash);
+    else
+        sc_get_block_runtime_version(run_v, parent_hash);
+
+    if (Self.runtime_version == run_v->spec_version) 
+        return;
+
+    Self.runtime_version = run_v->spec_version;
+    Self.transaction_version = run_v->transaction_version;
+
+    // check if metadata is in cache, else retrieve and add it
+
+    free(block_hash);
 }
