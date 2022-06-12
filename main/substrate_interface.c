@@ -603,6 +603,8 @@ void init_runtime(const char* block_h, const char* block_id)
 
         // add to cache
         cache_metadata(meta);
+
+        printf("Retreived metadata for %d from substrate node\n", Self.runtime_version);
     }
 
     free(block_hash);
