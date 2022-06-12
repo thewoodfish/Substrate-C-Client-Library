@@ -548,11 +548,11 @@ void init_runtime(const char* block_h, const char* block_id)
     char* buf;
     struct Block* bl;
     struct Runtime_Version* run_v;
+    char* meta;
+
+    char* runtime_block_hash = (char*) malloc(70);
     char* block_hash = (char*) malloc(70);
     char* parent_hash = (char*) malloc(70);
-
-    if (block_h) 
-        strcpy(block_hash,"podjfps");
 
     if (block_id && *block_hash) {
         fprintf(stderr, "%s\n", "Cannot provide block hash and block id at the same time");
@@ -581,10 +581,12 @@ void init_runtime(const char* block_h, const char* block_id)
     strcpy(parent_hash, bl->parent_hash);
 
     if (!strcmp(parent_hash, "0x0000000000000000000000000000000000000000000000000000000000000000"))
-        sc_get_block_runtime_version(run_v, Self.block_hash);
+        strcpy(runtime_block_hash, Self.block_hash);
     else
-        sc_get_block_runtime_version(run_v, parent_hash);
+        strcpy(runtime_block_hash, parent_hash);
 
+    sc_get_block_runtime_version(run_v, runtime_block_hash);
+    
     if (Self.runtime_version == run_v->spec_version) 
         return;
 
@@ -592,6 +594,53 @@ void init_runtime(const char* block_h, const char* block_id)
     Self.transaction_version = run_v->transaction_version;
 
     // check if metadata is in cache, else retrieve and add it
+    if (!metadata_is_cached()) {
+        printf("Retreived metadata for %d from cache\n", Self.runtime_version);
+    } else {
+        // fetch metadata and cache it
+        meta = (char*) malloc(70410);
+        strcpy(meta, sc_get_metadata(runtime_block_hash));
+
+        // add to cache
+        cache_metadata(meta);
+    }
 
     free(block_hash);
+    free(parent_hash);
+    free(runtime_block_hash);
+} 
+
+inline static void cache_metadata(const char* buf) 
+{
+    struct Metadata_Cache* end = Self.m_cache;
+    struct Metadata_Cache* new;
+
+    new = (struct Metadata_Cache*) malloc(sizeof(struct Metadata_Cache));
+    new->runtime_v = Self.runtime_version;
+    new->metadata = buf;
+    new->next = NULL;
+    
+    if (end == NULL) 
+        end = new;
+    else {
+        // else keep looping unti end
+        while (end != NULL) 
+            end = end->next;
+
+        end->next = new;
+    }
+}
+
+inline static bool metadata_is_cached() {
+    // check if metadata for a rumtime version is cached
+    struct Metadata_Cache* mc = Self.m_cache;
+    
+    while (mc != NULL) {
+        if (mc->runtime_v == Self.runtime_version)
+            return true;
+
+        mc = mc->next;
+    }
+
+    return false;
 }

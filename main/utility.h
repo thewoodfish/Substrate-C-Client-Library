@@ -112,8 +112,9 @@ struct Runtime_Version {
 } __RunVerse;
 
 struct Metadata_Cache {
-    char* runtime_string;
+    int runtime_v;
     char* metadata;
+    struct Metadata_Cache* next;
 } __MetDta;
 
 extern char* slice(const char* str, char* result, size_t start, size_t end);

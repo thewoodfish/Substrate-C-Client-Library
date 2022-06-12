@@ -28,7 +28,7 @@ struct Substrate {
     int metadata_decoder;
     struct Metadata_Decoder* m_decoder;
     int block_id;
-    int metadata_cache;
+    struct Metadata_Cache* m_cache;
     int type_registry_cache;
     
     bool debug; 
@@ -80,6 +80,10 @@ extern char* sc_get_storage_by_key(const char* key);
 extern void sc_get_block_runtime_version(struct Runtime_Version* runv, const char* block_hash);
 extern char* generate_storage_hash(const char* storage_module, const char* storage_function, char** list, char** hashers);
 extern void init_runtime(const char* block_hash, const char* block_id);
+static bool metadata_is_cached();
+static void cache_metadata(const char* buf);
+
+
 
 
 
