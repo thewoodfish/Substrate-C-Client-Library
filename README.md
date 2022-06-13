@@ -1,4 +1,5 @@
-<h4>Samaritan</h4>
-<p>A possible solution to decentralized identity</p>
-<small> Note: It's just an idea</small>
-<p>A samaritan is a online state of an individual</p>
+##Samaritan
+A possible solution to decentralized identity
+
+The idea is to build a layer beneath the user space but above the very kernel of an OS, that can communicate with a Substrate chain and other deventralized infrastructures e.g for storage.
+
