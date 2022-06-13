@@ -9,3 +9,5 @@ What should be done:
 A way to communicate with a substrate sanaritan chain should be created.
 Also the chain itself and what state it keeps should be defined.
 Apps are also represented onchain.
+
+Apps are a blackbox to samaritans. The data they ask for and the conditions surroundind it are listed onchain. The creation is listed onchain, it can be voted out and into a decentralized pool(abstraction for d-storage.
