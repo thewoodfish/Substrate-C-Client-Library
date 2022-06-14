@@ -527,7 +527,7 @@ void sc_get_block_runtime_version(struct Runtime_Version* runv, const char* bloc
 
     buf = rpc_request("chain_getRuntimeVersion", param, NULL);
     if (is_error(buf))
-        return NULL;
+        return;
     
     decode_runtime_string(runv, buf);
 }
@@ -619,7 +619,7 @@ inline static void cache_metadata(const char* buf)
 
     new = (struct Metadata_Cache*) malloc(sizeof(struct Metadata_Cache));
     new->runtime_v = Self.runtime_version;
-    new->metadata = buf;
+    new->metadata = (char*) buf;
     new->next = NULL;
     
     if (end == NULL) 
