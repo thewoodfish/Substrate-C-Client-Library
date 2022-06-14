@@ -46,7 +46,13 @@
 
 // gcc test2.c ../cScale/src/scale.c ../cScale/src/type/boolean.c
 
-// gcc test2.c ../cScale/src/scale.c ../cScale/src/type/compact.c ../cScale/src/util/hex.c
+// gcc test2.c ../cScale/src/scale.c ../cScale/src/type/fixed_int.c ../cScale/src/util/hex.c ../cScale/src/type/vector.c ../cScale/src/type/compact.c
+
+
+
+
+
+
 
 // arguments should be variable for add_param()
 
