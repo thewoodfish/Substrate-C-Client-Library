@@ -22,7 +22,7 @@ Communication is also an inportant issue with Samaritans.
 5. The a simple program can be built to test the whole network cycle and protocols, from user account creation to app creation to the final stage of app download and access of another user state by the app.
 
 ### Progress now
-Currently working on step 1. Having difficulties in decoding a substrate chain Scale encoded data. ```main/substrate_interface.c``` contains the main code for the client. <br>
+Currently working on step 1. Having difficulties in decoding a substrate chain Scale encoded data. ```main/substrate_interface.c``` contains the main code for the client and is still under dev. <br>
 Considering using the C++ Substrate library provided by USENET and wrapping it in C functions .
 
 Thank you!
