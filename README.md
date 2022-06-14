@@ -14,5 +14,15 @@ Communication is also an inportant issue with Samaritans.
 ...
 
 
+### Prototype development steps
+1. A substrate client written in C to communicate to a substrate chain.
+2. A minimal chain has to be built containing something like a ```Samaritan struct``` with ```CID```s, ```balance``` etc, a custom pallet and necessary pallets that would make it work basically. Also a couple of storage items need to be created also etc.
+3. Samaritan would be experimented on the Minix OS. So after the above, minix internals would be modified to authenticate with a chain, upload data to IPFS and pin on other decentralized storage providers, download and propagate state etc.
+4. A simple SDK/protocol that apps use to get access to data from a Samaritan.
+5. The a simple program can be built to test the whole network cycle and protocols, from user account creation to app creation to the final stage of app download and access of another user state by the app.
 
-```code```
+### Progress now
+Currently working on step 1. Having difficulties in decoding a substrate chain Scale encoded data. ```substrate_interface.c``` contains the main code for the client. 
+Considering using the C++ Substrate library provided by USENET and wrapping it in C functions .
+
+Thank you!
