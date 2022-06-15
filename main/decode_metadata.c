@@ -5,6 +5,7 @@
 #include <string.h>
 #include "../cScale/src/scale.h"
 #include "utility.h"
+#include "decode_metadata.h"
 
 // sample metadata
 char metadata[] = "0x6d6574610e0d02000c1c73705f636f72651863727970746f2c4163636f756e7449643332000004000401205b75383b2033325d000004000003200000000800080000\
@@ -482,6 +483,15 @@ b4e6f6e5a65726f53656e646572e5019040436865636b5370656356657273696f6ee901103843686
 // metadata pointer
 char* md;
 
+int main(void) {
+    char meta[50000];
+
+    decode_metadata(meta, metadata);
+    printf("%s", meta);
+
+    return 0;
+}
+
 void decode_metadata(char* decoded_meta, char* metadata) 
 {
     char* str;
@@ -500,18 +510,17 @@ void decode_metadata(char* decoded_meta, char* metadata)
     
     if (!strcmp("meta", magic)) {
         printf("First four bytes of metadata should be 0x6d657461, found %s\n", magic);
-        return 0;
+        return;
     }
 
     str = version;
     loop(2, str);
 
     md_decode_array(modules, md_decode_module);
-    md_decode_extrinsic(extrinsics);
+    md_decode_extrinsics(extrinsics);
 
     // collate metadata
     sprintf(decoded_meta, "%s###%d###%s###%s", magic, md_to_int(version), modules, extrinsics);
-
 }
 
 inline static void loop(int c, char* str) {
@@ -534,25 +543,27 @@ inline static void loop2(int c, char* str, char* fl) {
     };
 }
 
-void md_decode_extrinsics(char* buf) {
+inline static void md_assign_byte(char* tmp) {
+    tmp[0] = *md;
+    tmp[1] = *(md + 1);
+}
+
+static void md_decode_extrinsics(char* buf) {
     char tmp[2];
     int version;
     char signed_ext[2048];
 
-    tmp[0] = *md;
-    tmp[1] = *(md + 1);
-
+    md_assign_byte(tmp);
     version = md_to_int(tmp);
-    md++;
+    inc_md_by(1);
     md_decode_string_array(signed_ext);
 
     sprintf(buf, "%d###%s", version, signed_ext);
-
 }
 
 static void md_decode_array(char* buf, void md_decode_elem(char* str)) {
     int num, idx;
-    char elem[2048];
+    char elem[4096];
     char pool[4096];
 
     num = md_decode_compact();
@@ -566,7 +577,7 @@ static void md_decode_array(char* buf, void md_decode_elem(char* str)) {
     }
 }
 
-void md_decode_module(char* buf) {
+static void md_decode_module(char* buf) {
     char name[256];
     char storage[2048];
     char calls[2048];
@@ -578,13 +589,13 @@ void md_decode_module(char* buf) {
     md_decode_option(storage, md_decode_storage);
     md_decode_option(calls, md_decode_calls);
     md_decode_option(events, md_decode_events);
-    md_decode_option(constants, md_decode_constant);
-    md_decode_option(errors, md_decode_error);
+    md_decode_array(constants, md_decode_constant);
+    md_decode_array(errors, md_decode_error);
 
     sprintf(buf, "%s###%s###%s###%s###%s###%s", name, storage, calls, events, constants, errors);
 }
 
-void md_decode_error(char* buf) {
+static void md_decode_error(char* buf) {
     char name[256];
     char docs[2048];
 
@@ -594,42 +605,42 @@ void md_decode_error(char* buf) {
     sprintf(buf, "%s###%s", name, docs);
 }
 
-void md_decode_constant(char* buf) {
+static void md_decode_constant(char* buf) {
     char name[256];
-    char args[2048];
     char ty[2048];
+    char value[2048];
     char docs[2048];
 
     md_decode_string(name);
     md_decode_string(ty);
-    md_decode_array(args, md_decode_call_arg);
+    md_decode_byte_array(value);
     md_decode_string_array(docs);
 
-    sprintf(buf, "%s###%s###%s###%s", name, ty, args, docs);
+    sprintf(buf, "%s###%s###%s###%s", name, ty, value, docs);
 }
 
 
-void md_decode_events(char* buf) {
+static void md_decode_events(char* buf) {
     md_decode_array(buf, md_decode_event);
 }
 
-void md_decode_event(char* buf) {
+static void md_decode_event(char* buf) {
     char name[256];
     char args[2048];
     char docs[2048];
 
     md_decode_string(name);
-    md_decode_array(args, md_decode_call_arg);
+    md_decode_string_array(args);
     md_decode_string_array(docs);
 
     sprintf(buf, "%s###%s###%s", name, args, docs);
 }
 
-void md_decode_calls(char* buf) {
+static void md_decode_calls(char* buf) {
     md_decode_array(buf, md_decode_call);
 }
 
-void md_decode_call(char* buf) {
+static void md_decode_call(char* buf) {
     char name[256];
     char args[2048];
     char docs[2048];
@@ -641,35 +652,33 @@ void md_decode_call(char* buf) {
     sprintf(buf, "%s###%s###%s", name, args, docs);
 }
 
-void md_decode_call_arg(char* buf) {
+static void md_decode_call_arg(char* buf) {
     char name[256];
     char ty[1024];
 
     md_decode_string(name);
-    md_decode_string_array(ty);
+    md_decode_string(ty);
 
     sprintf(buf, "%s###%s", name, ty);
 }
 
-void md_decode_option(char* buf, void md_decode_opt()) {
+static void md_decode_option(char* buf, void md_decode_opt(char* str)) {
     char tmp[2];
     int opt;
 
-    tmp[0] = *md;
-    tmp[1] = *(md + 1);
-
+    md_assign_byte(tmp);
     opt = md_to_int(tmp);
 
     if (!opt) {
-        md++;
-        buf = NULL;
+        inc_md_by(1);
+        return;
     }
 
-    md++;
-    md_decode_opt();
+    inc_md_by(1);
+    md_decode_opt(buf);
 }
 
-void md_decode_storage(char* buf) {
+static void md_decode_storage(char* buf) {
     char prefix[256];
     char entries[256];
 
@@ -679,44 +688,40 @@ void md_decode_storage(char* buf) {
     sprintf(buf, "%s###%s", prefix, entries);
 }
 
-void md_decode_storage_entry(char* buf) {
+static void md_decode_storage_entry(char* buf) {
     char name[256];
     char modifier[24];
-    char stm[1024];
+    char ty[2048];
     char def[1024];
     char docs[2048];
 
     md_decode_string(name);
     md_decode_storage_modifier(modifier);
-    md_decode_storage_type(stm);
+    md_decode_storage_type(ty);
     md_decode_byte_array(def);
     md_decode_string_array(docs);
 
-    sprintf(buf, "%s###%s###%s###%s###%s###%s", name, modifier, stm, def, docs);
+    sprintf(buf, "%s###%s###%s###%s###%s", name, modifier, ty, def, docs);
 }
 
-void md_decode_string_array(char* str) {
+static void md_decode_string_array(char* str) {
     md_decode_array(str, md_decode_string);
 }
 
-void  md_decode_byte_array(char* buf) {
+static void md_decode_byte_array(char* buf) {
     int numb;
     char tmp[256];
     char* str;
 
-    numb = md_decode_compact();
     str = tmp;
 
-    while (numb) {
-        *str = *md;
-        str++; md++;
-        numb--;
-    }
+    numb = md_decode_compact();
+    loop(numb, str);
 
     strcpy(buf, tmp);
 }
 
-void md_decode_storage_type(char* str) {
+static void md_decode_storage_type(char* buf) {
     char tmp[2];
     char name[256];
     char hasher[24];
@@ -724,32 +729,31 @@ void md_decode_storage_type(char* str) {
     char key[256];
     char key2[256];
     char value[256];
-    char unused[256];
+    char unused[8];
     int idx;
 
-    tmp[0] = *md;
-    tmp[1] = *(md + 1);
-
+    md_assign_byte(tmp);
     idx = md_to_int(tmp);
 
     if (!idx) {
-        md++;
+        inc_md_by(1);
         md_decode_string(name);
 
-        strcpy(str, name);
+        strcpy(buf, name);
         return;
+
     } else if (idx == 1) {
-        md++;
+        inc_md_by(1);
         md_decode_storage_hasher(hasher);
         md_decode_string(key);
         md_decode_string(value);
-        md_decode_string(unused);
+        md_decode_bool(unused);
 
-        sprintf(str, "%s###%s###%s###%s", hasher, key, value, unused);
+        sprintf(buf, "%s###%s###%s###%s", hasher, key, value, unused);
         return;
     }
 
-    md++;
+    inc_md_by(1);
     md_decode_storage_hasher(hasher);
     md_decode_string(key);
     md_decode_string(key2);
@@ -757,56 +761,59 @@ void md_decode_storage_type(char* str) {
     md_decode_storage_hasher(key2_hasher);
 
 
-    sprintf(str, "%s###%s###%s###%s###%s", hasher, key, key2, value, key2_hasher);
+    sprintf(buf, "%s###%s###%s###%s###%s", hasher, key, key2, value, key2_hasher);
     return;
-
 }
 
-void md_decode_storage_hasher(char* str) {
-    char* hashers[7] = {"Blake2_128", "Blake2_256", "Blake2_128Concat", "Twox128", "Twox256", "Twox64Concat", "Identity"};
+static void md_decode_bool(char* buf) {
+    char tmp[2];
+    int val;
+
+    md_assign_byte(tmp);
+    val = md_to_int(tmp);
+
+    inc_md_by(1);
+    
+    val ? strcpy(buf, "true") : strcpy(buf, "false");
+}
+
+static void md_decode_storage_hasher(char* str) {
+    char* hashers[7] = { "Blake2_128", "Blake2_256", "Blake2_128Concat", "Twox128", "Twox256", "Twox64Concat", "Identity" };
     char tmp[2];
     int idx;
 
-    tmp[0] = *md;
-    tmp[1] = *(md + 1);
-
+    md_assign_byte(tmp);
     idx = md_to_int(tmp);
 
+    inc_md_by(1);
     strcpy(str, hashers[idx]);
 }
 
-void md_decode_storage_modifier(char* str) {
+static void md_decode_storage_modifier(char* str) {
     char tmp[2];
     int idx;
 
-    tmp[0] = *md;
-    tmp[1] = *(md + 1);
-
+    md_assign_byte(tmp);
     idx = md_to_int(tmp);
-    md++;
+    inc_md_by(1);
 
     idx ? strcpy(str, "Default") : strcpy(str, "Optional");
-
 }
 
-void md_decode_string(char* buf) {
-    int len;
+static void md_decode_string(char* buf) {
+    int num;
     char tmp[256];
     char* str;
 
-    len = md_decode_compact() * 2;
-    str = tmp;
+    num = md_decode_compact();
 
-    while (len) {
-        *str = *md;
-        str++; md++;
-        len--;
-    }
+    str = tmp;
+    loop(num, str);
 
     strcpy(buf, md_to_string(tmp));
 }
 
-static int md_decode_compact() {
+int md_decode_compact() {
     char raw[24];
     char* s;
     char* r;
@@ -815,19 +822,20 @@ static int md_decode_compact() {
     s = md;
     r = raw;
 
-    raw[0] = *md;
-    raw[1] = *(md + 1);
-
+    md_assign_byte(raw);
     flag = md_to_int(raw) & 0b11;
+
+    printf("%d and %d\n", md_to_int(raw), flag);
+
 
     if (!flag) {
         inc_md_by(1);
         return md_to_int(raw) >> 2;
-
+        
     } else if (flag == 0b01) {
         inc_md_by(2);
         loop2(4, r, s);
-        
+
         return md_to_int(raw) >> 2;
 
     } else if (flag == 0b10) {
@@ -837,7 +845,7 @@ static int md_decode_compact() {
         return md_to_int(raw) >> 2;
     }
 
-    len = (md_to_int(raw) >> 2) + 4;
+    len = (md_to_int(raw) >> 2) + 8;
     s += 2;
 
     loop2(len, r, s);
