@@ -9,6 +9,7 @@
         "substrate_interface.h": "c",
         "ssl.h": "c",
         "scale.h": "c",
-        "xxhash.h": "c"
+        "xxhash.h": "c",
+        "vector": "c"
     }
 }
