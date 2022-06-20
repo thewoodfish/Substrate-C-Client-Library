@@ -24,5 +24,8 @@ Communication is also an inportant issue with Samaritans.
 ### Progress now
 Currently working on step 1. 
  ```main/substrate_interface.c``` contains the main code for the client and is still under dev. <br>
+ 
+### IMPORTANT
+This repo has been temporarily abandoned for https://github.com/thewoodfish/sam. Which is a test web version. This is due to the difficulty and time expended in decoding a chains data and other primitive stuff. I don't want to get derailed from the vision battling low-level stuffs. As soon as the web mpv is available, this repo will come to live!
 
 Thank you!
