@@ -1,9 +1,11 @@
 # Samaritan
 A possible solution to decentralized identity
 
+A samaritan is a digital state of an individual that is very decentralized and 100% owned and access-controlled by the owner. A samaritan can "possess" devices with its state and then allow programs can access that data, in a well defined infrastructure. Ofcourse, there's more to it...
+
 #### Please note that this is subject to quick change, as soon as the next minute. You're free to contribute in every way :)
 
-The idea is to build a layer beneath the user space but above the very kernel of an OS, that can communicate with a Substrate chain and other decentralized infrastructures e.g for storage.
+The idea implemented will be to build a layer beneath the user space but above the very kernel of an OS, that can communicate with a Substrate chain and other decentralized infrastructures e.g for storage.
 
 On the Samaritan OS, a user is asked to fill in personal details with well-defined fields that do not change. This goes to a decentralized storage and is recorded as a transaction on a substrate chain.
 When an app is created, the app creator signs the app onchain and uploads it to decentralized storage with its CID stored onchain. On app creation, the details needed by the apps would be well defined and stated already. The app creator stakes a particular amount, and pays validators to validate its app, before being added to the app pool. So after validation, if successful, the app is approved for download and added to the pool. Another transaction. If not, the money staked is returned but the fees are not. The app can be removed also from the pool, if its voted out by 2/3 of the downloaders. When this happends the staked crypto is slashed, but in the absence of this, the app creator can earn staking rewards. So on download of the app into his Samaritan OS, the user decides to open the app.
