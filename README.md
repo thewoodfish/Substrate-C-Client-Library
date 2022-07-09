@@ -3,8 +3,6 @@ A possible solution to decentralized identity
 
 A samaritan is a digital state of an individual that is very decentralized and 100% owned and access-controlled by the owner. A samaritan can "possess" devices with its state and then allow programs can access that data, in a well defined infrastructure. Ofcourse, there's more to it...
 
-#### Please note that this is subject to quick change, as soon as the next minute. You're free to contribute in every way :)
-
 The idea implemented will be to build a layer beneath the user space but above the very kernel of an OS, that can communicate with a Substrate chain and other decentralized infrastructures e.g for storage.
 
 On the Samaritan OS, a user is asked to fill in personal details with well-defined fields that do not change. This goes to a decentralized storage and is recorded as a transaction on a substrate chain.
