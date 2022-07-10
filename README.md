@@ -1,31 +1,61 @@
-# Samaritan
-A possible solution to decentralized identity
+Samaritan: A Decentralized Digital Identity Solution
 
-A samaritan is a digital state of an individual that is very decentralized and 100% owned and access-controlled by the owner. A samaritan can "possess" devices with its state and then allow programs can access that data, in a well defined infrastructure. Ofcourse, there's more to it...
+	Just as the word “person” describes a human being, a “Samaritan” describes completely , the digital identity of an individual. A Samaritan can be thought of as a living vessel made up of 1s and 0s whose personality is created and/or shaped uniquely by an individual's online interactions and data, otherwise known as “state”. 
+	Samaritans are not new, they exist today in pieces’ scattered across the internet, living rent-free in data silos and storage farms owned by different entities, large and small, with different agendas. All in all, as you know, because the “home” of your state doesn’t belong to you, these “entities” can do whatever they please with your state/data e.g selling them, worse, they can deny you access to your own data! That is quite funny :)
 
-The idea implemented will be to build a layer beneath the user space but above the very kernel of an OS, that can communicate with a Substrate chain and other decentralized infrastructures e.g for storage.
+What is a Samaritan?
+A Samaritan is the digital identity of an individual that is able to "possess" devices with its state(static, dynamic and inferred) and maintain controlled access between its state and the outside world.
 
-On the Samaritan OS, a user is asked to fill in personal details with well-defined fields that do not change. This goes to a decentralized storage and is recorded as a transaction on a substrate chain.
-When an app is created, the app creator signs the app onchain and uploads it to decentralized storage with its CID stored onchain. On app creation, the details needed by the apps would be well defined and stated already. The app creator stakes a particular amount, and pays validators to validate its app, before being added to the app pool. So after validation, if successful, the app is approved for download and added to the pool. Another transaction. If not, the money staked is returned but the fees are not. The app can be removed also from the pool, if its voted out by 2/3 of the downloaders. When this happends the staked crypto is slashed, but in the absence of this, the app creator can earn staking rewards. So on download of the app into his Samaritan OS, the user decides to open the app.
-On opening the app, the user is explicitly asked by the OS whether to allow or give the apps certain access to data stored in its state. If yes, on entering the app, the user public ID is given to the app, and the data also accompanies it. Now the user should be able to revoke access to that data by submitting a transaction or the access may expire due to the expiry of the lease period. I don't know how this can be implemented yet. Maybe something slike a place in memory where this data can be read and/or written by the program/app. This data will be committed online, That is why a Samaritan is basically a state. Files not committed online cannot be regarded as part of a Samaritan state. Local apps data are part of a state, but can be flagged as not. 
-
-A samaritan OS hopes to run on a mobile device. A samaritan helps users to become somewhat independent of a device. Its as simple has getting a new device. Inputing your keys and getting your state restored on that device. With your apps too, becuase apps have a presence onchain, which can be traced and installed on the new device along with the local data.
-Communication is also an inportant issue with Samaritans.
-...
+What components make up a Samaritan?
+	A Samaritan stands on three pillars:
+The Samaritan blockchain.
+The Samaritan OS.
+The Samaritan protocol.
 
 
-### Prototype development steps
-1. A substrate client written in C to communicate to a substrate chain.
-2. A minimal chain has to be built containing something like a ```Samaritan struct``` with ```CID```s, ```balance``` etc, a custom pallet and necessary pallets that would make it work basically. Also a couple of storage items need to be created also etc.
-3. Samaritan would be experimented on the Minix OS. So after the above, minix internals would be modified to authenticate with a chain, upload data to IPFS and pin on other decentralized storage providers, download and propagate state etc.
-4. A simple SDK/protocol that apps use to get access to data from a Samaritan.
-5. The a simple program can be built to test the whole network cycle and protocols, from user account creation to app creation to the final stage of app download and access of another user state by the app.
+The Samaritan Blockchain
+	A blockchain simply put, is a distributed immutable ledger. A blockchain is very useful and mandatory for Samaritans in many ways including but not limited to:
+Providing unique unforgeable identity to an individual.
+Uniquely mapping an individual to whatever data(static) she might own.
+Proving and verifying ownership of data.
+Authorizing and revoking access to the online state of the individual.
+Recording online interactions.
+Providing reliable consensus & governance for additions and exclusions from the network.
+Securing the network. 
+Etc.
 
-### Progress now
-Currently working on step 1. 
- ```main/substrate_interface.c``` contains the main code for the client and is still under dev. <br>
- 
-### IMPORTANT
-This repo has been temporarily abandoned for https://github.com/thewoodfish/sam. Which is a test web version. This is due to the difficulty and time expended in decoding a chains data and other primitive stuff. I don't want to get derailed from the vision battling low-level stuffs. As soon as the web mvp is available, this repo will come to life!
+The Samaritan Operating System
+	The Samaritan OS is a piece of low-level software that stands as a vessel to be “possessed” at will by any Samaritan. This OS is able to connect with the Samaritan blockchain and other decentralized protocols e.g IPFS. The main function of the OS is to provide the infrastructure for programs running on the OS to interact seamlessly with Samaritans, while ensuring controlled access to the individual’s state. The OS is built to be really light with the Samaritan and its protocols just residing below the user space.
 
-Thank you!
+Where is my data stored?
+	Samaritans store their state with the help of decentralized storage protocols like IPFS on decentralized storage networks like Crust. All of the data comprising the state are sharded and spread across the globe through a simple incentive model. Nobody can EVER have access or control of your data except when properly authorized. The Samaritan OS is able to gather this state at will and present it to the user on any devices the user may choose to use. Your state is independent of any device. It is everywhere and nowhere!
+
+What about the programs I choose to run?
+	Programs follow some procedures before they can be run on a Samaritan OS. In a high abstraction for a typical program:
+The program must be verified by the network validators in a purely decentralized manner.
+If the program passes, it is committed to decentralized storage networks and is added to the ability pool.
+The program is then discoverable by every Samaritan across the globe.
+It can be then added to a users state by download.
+On running the program, the Samaritan checks to see what data the program might need to run properly. 
+Granting, revoking, logging of data data, behavior and access is controlled by the individual through the Samaritan protocol.
+
+The Samaritan Protocol
+	This describes the rules, SDKs, semantics of synchronization between the actors comprising the Samaritan exosystem.
+
+Technologies to be utilized in bringing an MVP to life?
+The following technologies including but not limited to the below are to be employed for its development:
+Minix OS: This is the OS that will be modified for the creation of an MVP.
+Substrate: A next-gen blockchain framework.
+A Substrate Client written in C.
+The C language.
+Etc.
+
+
+Progress?
+	Samaritan is still in its early stage undergoing its idealization testing phase. It is currently being lightly built with its client as a simulated terminal on a browser. This encourages quick-testing and speed of changing ideas and implementation paths. It is currently utilizes JavaScript, node-js and Substrate.
+
+
+Github:
+https://github.com/thewoodfish/sam
+https://github.com/thewoodfish/s-chain
+https://github.com/thewoodfish/s-beta
